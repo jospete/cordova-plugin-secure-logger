@@ -48,19 +48,5 @@
   },
   "dependencies": {
     "@obsidize/rx-console": "^6.1.4"
-  },
-  "exports": {
-    ".": {
-      "types": "./www/cordova-plugin-secure-logger.d.ts",
-      "node": "./www/cordova-plugin-secure-logger.js",
-      "require": "./www/cordova-plugin-secure-logger.js",
-      "default": "./www/cordova-plugin-secure-logger.js"
-    },
-    "./rx-console": {
-      "types": "./www/rx-console.d.ts",
-      "node": "./www/rx-console.js",
-      "require": "./www/rx-console.js",
-      "default": "./www/rx-console.js"
-    }
   }
 }
