@@ -1,5 +1,5 @@
 import Foundation
-import IDZSwiftCommonCrypto
+import CipherStreams
 
 public let KEY_MAX_FILE_SIZE_BYTES = "maxFileSizeBytes"
 public let KEY_MAX_TOTAL_CACHE_SIZE_BYTES = "maxTotalCacheSizeBytes"
