@@ -23,13 +23,13 @@ best thing is to capture logs in a secure sandbox - which is the aim of this plu
 NPM:
 
 ```bash
-npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.1.0
+npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.2.0
 ```
 
 Cordova:
 
 ```bash
-cordova plugin add git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.1.0
+cordova plugin add git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.2.0
 ```
 
 ## Usage
