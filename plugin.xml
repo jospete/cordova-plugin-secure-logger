@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-secure-logger" version="0.1.0">
+
+   <name>Secure Logger</name>
+   <description>Log capture plugin that intercepts both webview and native events, and stores them securely on disk</description>
+
+   <js-module name="SecureLoggerPlugin" src="www/cordova-plugin-secure-logger.js">
+      <clobbers target="cordova.plugins.SecureLoggerPlugin" />
+   </js-module>
+
+   <platform name="android">
+      <config-file parent="/*" target="config.xml">
+         <preference name="GradlePluginKotlinEnabled" value="true" />
+         <feature name="SecureLoggerPlugin">
+            <param name="android-package" value="com.obsidize.secure.logger.SecureLoggerPlugin" />
+         </feature>
+      </config-file>
+      
+      <framework src="com.jakewharton.timber:timber:5.0.1" />
+      <framework src="androidx.security:security-crypto:1.1.0-alpha06" />
+
+      <source-file src="src/android/com/obsidize/secure/logger/SecureLoggerUtility.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android/com/obsidize/secure/logger/RotatingFileStream.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android/com/obsidize/secure/logger/TimberFileProxy.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android/com/obsidize/secure/logger/SecureLoggerPlugin.kt" target-dir="java/com/obsidize/secure/logger" />
+   </platform>
+
+   <platform name="ios">
+      <config-file parent="/*" target="config.xml">
+          <feature name="SecureLoggerPlugin">
+             <param name="ios-package" value="SecureLoggerPlugin" />
+         </feature>
+      </config-file>
+
+      <podspec>
+         <config>
+            <source url="https://cdn.cocoapods.org/" />
+         </config>
+         <pods use-frameworks="true">
+            <pod name="CocoaLumberjack/Swift" spec="~> 3.8" />
+            <pod name="CipherStreams" git="https://github.com/jospete/CipherStreams.git" tag="0.2.0" />
+         </pods>
+      </podspec>
+      
+      <header-file src="src/ios/SecureLoggerPlugin-Bridging-Header.h" type="BridgingHeader" />
+      <source-file src="src/ios/SecureLoggerPlugin+FileStream.swift" />
+      <source-file src="src/ios/SecureLoggerPlugin+Utility.swift" />
+      <source-file src="src/ios/SecureLoggerPlugin+LumberjackFileProxy.swift" />
+      <source-file src="src/ios/SecureLoggerPlugin.swift" />
+    </platform>
+</plugin>

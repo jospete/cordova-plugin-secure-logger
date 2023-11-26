@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"module": "CommonJS",
+		"outDir": "www/",
+		"typeRoots": ["node_modules/@types"],
+		"types": ["cordova"],
+		"lib": ["ES5", "DOM", "ES2015"],
+		"declaration": true,
+		"strict": true,
+		"moduleResolution": "node"
+	},
+	"compileOnSave": true,
+	"files": [
+        "src/ts/cordova-plugin-secure-logger.ts"
+    ],
+	"exclude": [
+        "node_modules",
+        "tests/*.ts"
+    ]
+}
