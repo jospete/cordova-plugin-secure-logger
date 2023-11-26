@@ -2,6 +2,8 @@
 
 Cordova plugin to capture both webview and native log events and store them securely on disk.
 
+**Also works out-the-box with [Capacitor](https://capacitorjs.com/)!**
+
 Pairs well with [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-console)
 for capturing and forwarding webview events.
 
