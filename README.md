@@ -22,16 +22,22 @@ best thing is to capture logs in a secure sandbox - which is the aim of this plu
 
 ## Installation
 
-NPM:
+Github:
 
 ```bash
 npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.2.0
 ```
 
+NPM / Capacitor:
+
+```bash
+npm i -P -E cordova-plugin-secure-logger@0.2.0
+```
+
 Cordova:
 
 ```bash
-cordova plugin add git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.2.0
+cordova plugin add cordova-plugin-secure-logger@0.2.0
 ```
 
 ## Usage

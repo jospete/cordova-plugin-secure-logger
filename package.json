@@ -20,14 +20,20 @@
   },
   "keywords": [
     "cordova",
+    "capacitor",
+    "plugin",
     "secure",
     "logger",
     "crypto",
     "encrypted",
     "logs",
-    "storage"
+    "storage",
+    "log",
+    "to",
+    "file",
+    "logtofile"
   ],
-  "author": "Josh Noel <jnoel@jospete.com>",
+  "author": "Josh Noel <obsidize@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jospete/cordova-plugin-secure-logger/issues"
