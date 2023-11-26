@@ -71,6 +71,10 @@ service.someOperation();
 
 - Android:
 
+This plugin uses [Timber](https://github.com/JakeWharton/timber) for Android native log capture.
+Simply replace `Log.xxx()` calls from `android.util.Log` with `Timer.xxx()` from `timber.log.Timber`
+in other plugins, and those logs will automatically be captured by this plugin.
+
 ```kotlin
 import timber.log.Timber
 
@@ -80,6 +84,10 @@ Timber.d("Logging stuff on native android for the secure logger plugin! Yay nati
 ```
 
 - iOS:
+
+This plugin uses [CocoaLumberjack](https://github.com/CocoaLumberjack/CocoaLumberjack) for iOS native log capture.
+Simply replace `print()` / `NSLog()` calls with `DDLogXXXX()`
+in other plugins, and those logs will automatically be captured by this plugin.
 
 ```swift
 import CocoaLumberjack
@@ -110,38 +118,16 @@ You can use [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-co
 
 ```typescript
 /* logger-bootstrap.ts */
-import { getPrimaryLoggerTransport, Logger, LogEvent } from '@obsidize/rx-console';
-import { SecureLogger, SecureLogLevel } from 'cordova-plugin-secure-logger';
+import { getPrimaryLoggerTransport, Logger } from '@obsidize/rx-console';
+import { sendRxConsoleEventToNative } from 'cordova-plugin-secure-logger/rx-console';
 
 const primaryTransport = getPrimaryLoggerTransport();
 const mainLogger = new Logger('Main');
 
-function remapLogLevel(level: number): SecureLogLevel {
-    switch (level) {
-        case LogLevel.VERBOSE:  return SecureLogLevel.VERBOSE;
-        case LogLevel.TRACE:    return SecureLogLevel.VERBOSE;
-        case LogLevel.DEBUG:    return SecureLogLevel.DEBUG;
-        case LogLevel.INFO:     return SecureLogLevel.INFO;
-        case LogLevel.WARN:     return SecureLogLevel.WARN;
-        case LogLevel.ERROR:    return SecureLogLevel.ERROR;
-        case LogLevel.FATAL:    return SecureLogLevel.FATAL;
-        default:                return SecureLogLevel.VERBOSE;
-    }
-}
-
-function captureRxConsoleEvent(ev: LogEvent): void {
-    SecureLogger.queueEvent({
-        level: remapLogLevel(ev.level),
-        timestamp: ev.timestamp,
-        tag: ev.tag,
-        message: ev.message
-    });
-}
-
 primaryTransport
     .enableDefaultBroadcast()
     .events()
-    .addListener(captureRxConsoleEvent);
+    .addListener(sendRxConsoleEventToNative);
 
 mainLogger.debug(`webview-to-native logging is initialized!`);
 ```

@@ -2,9 +2,8 @@
   "name": "cordova-plugin-secure-logger",
   "version": "0.1.0",
   "description": "cordova plugin for securely writing logs to local app cache",
-  "main": "www/cordova-plugin-secure-logger.js",
-  "types": "www/cordova-plugin-secure-logger.d.ts",
-  "typings": "www/cordova-plugin-secure-logger.d.ts",
+  "main": "./www/cordova-plugin-secure-logger.js",
+  "types": "./www/cordova-plugin-secure-logger.d.ts",
   "scripts": {
     "build": "rm -rf ./www/* && tsc",
     "docs": "typedoc ./src/ts/cordova-plugin-secure-logger.ts --out ./docs",
@@ -40,5 +39,22 @@
     "npm-run-all": "4.1.5",
     "typedoc": "0.25.3",
     "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "@obsidize/rx-console": "^6.1.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./www/cordova-plugin-secure-logger.d.ts",
+      "node": "./www/cordova-plugin-secure-logger.js",
+      "require": "./www/cordova-plugin-secure-logger.js",
+      "default": "./www/cordova-plugin-secure-logger.js"
+    },
+    "./rx-console": {
+      "types": "./www/rx-console.d.ts",
+      "node": "./www/rx-console.js",
+      "require": "./www/rx-console.js",
+      "default": "./www/rx-console.js"
+    }
   }
 }

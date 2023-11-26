@@ -11,8 +11,8 @@
 		"moduleResolution": "node"
 	},
 	"compileOnSave": true,
-	"files": [
-        "src/ts/cordova-plugin-secure-logger.ts"
+	"include": [
+        "src/ts/**/*.ts"
     ],
 	"exclude": [
         "node_modules",
