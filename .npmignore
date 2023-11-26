@@ -1,0 +1,6 @@
+/docs
+/scripts
+/src/ts
+
+.nvmrc
+tsconfig.json
