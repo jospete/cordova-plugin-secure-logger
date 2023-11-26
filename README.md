@@ -23,20 +23,20 @@ best thing is to capture logs in a secure sandbox - which is the aim of this plu
 NPM:
 
 ```bash
-npm i -P -E git+https://github.com/healthrecoverysolutions/cordova-plugin-secure-logger.git#0.1.0
+npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.1.0
 ```
 
 Cordova:
 
 ```bash
-cordova plugin add git+https://github.com/healthrecoverysolutions/cordova-plugin-secure-logger.git#0.1.0
+cordova plugin add git+https://github.com/jospete/cordova-plugin-secure-logger.git#0.1.0
 ```
 
 ## Usage
 
 ### API
 
-Source documentation can be found [here](https://healthrecoverysolutions.github.io/cordova-plugin-secure-logger/)
+Source documentation can be found [here](https://jospete.github.io/cordova-plugin-secure-logger/)
 
 ### Logging Events
 

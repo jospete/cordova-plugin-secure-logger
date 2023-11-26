@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/healthrecoverysolutions/cordova-plugin-secure-logger.git"
+    "url": "git+https://github.com/jospete/cordova-plugin-secure-logger.git"
   },
   "keywords": [
     "cordova",
@@ -27,12 +27,12 @@
     "logs",
     "storage"
   ],
-  "author": "Josh Noel <jnoel@healthrecoverysolutions.com>",
+  "author": "Josh Noel <jnoel@jospete.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/healthrecoverysolutions/cordova-plugin-secure-logger/issues"
+    "url": "https://github.com/jospete/cordova-plugin-secure-logger/issues"
   },
-  "homepage": "https://github.com/healthrecoverysolutions/cordova-plugin-secure-logger#readme",
+  "homepage": "https://github.com/jospete/cordova-plugin-secure-logger#readme",
   "devDependencies": {
     "@types/cordova": "11.0.2",
     "@types/node": "20.8.9",
