@@ -12,7 +12,8 @@
     "version": "run-s build docs version:sync",
     "version:patch": "npm version patch",
     "version:publish": "node ./scripts/version-publish.js",
-    "bump": "run-s version:patch version:publish",
+    "npm:publish": "npm publish",
+    "bump": "run-s version:patch version:publish npm:publish",
     "fix:ios": "node ./scripts/fix-ios-source-imports.js"
   },
   "repository": {
