@@ -133,6 +133,7 @@ extension URL {
         return FileManager.default.fileExists(atPath: self.path)
     }
     
+    @discardableResult
     func deleteFileSystemEntry() -> Bool {
         do {
             try FileManager.default.removeItem(at: self)
