@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+# USAGE:
+# ${USAGE_EXAMPLE}
+
+SRC=${SOURCE_FOLDER_PATH}
+DST=./src/android/com/obsidize/secure/logger
+
+echo "copying android source files from '$SRC' to '$DST'"
+rm -rf "$DST"
+cp -R "$SRC" "$DST"

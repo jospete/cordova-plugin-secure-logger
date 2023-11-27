@@ -17,6 +17,33 @@ private const val LOG_FILE_NAME_PREFIX = "SCR-LOG-V"
 private const val LOG_FILE_NAME_EXTENSION = ".log"
 private const val RFS_SERIALIZER_VERSION = 1
 
+// strips out the version from an existing file name so
+// we can check if the file is stale and should be deleted
+val String.serializerVersion: Int?
+	get() {
+		if (!this.startsWith(LOG_FILE_NAME_PREFIX)) {
+			return null
+		}
+
+		val startIndex = LOG_FILE_NAME_PREFIX.length
+		var endIndex = startIndex + 1
+
+		while (endIndex < this.length && this[endIndex].isDigit()) {
+			endIndex++
+		}
+
+		return try {
+			this.substring(startIndex, endIndex).toIntOrNull()
+		} catch (_: Exception) {
+			null
+		}
+	}
+
+fun String.isSerializedWith(version: Int): Boolean {
+	val ownVersion = this.serializerVersion
+	return ownVersion != null && ownVersion == version
+}
+
 data class RotatingFileStreamOptions(
     val outputDir: File,
     var maxFileSizeBytes: Long = 2 * 1000 * 1000, // 2MB
@@ -294,11 +321,22 @@ class RotatingFileStream(
             ?.toMutableList()
             ?: mutableListOf()
 
+		if (files.isEmpty()) {
+			return
+		}
+
         files.sortWith { a, b -> a.name.compareTo(b.name) }
 
-        // TODO: may want to try consolidating log files together
-        //      before deletion to avoid unnecessary data loss.
+		// Step 1 - Purge any invalid files
+		for (i in files.count()-1 downTo 0) {
+			val valid = files[i].name.isSerializedWith(RFS_SERIALIZER_VERSION)
+			if (!valid) {
+				files[i].delete()
+				files.removeAt(i)
+			}
+		}
 
+		// Step 2 - Purge files until we are under the max file count threshold
         while (files.isNotEmpty() && files.size > maxFileCount) {
             files[0].delete()
             files.removeAt(0)
@@ -306,6 +344,7 @@ class RotatingFileStream(
 
         var totalFileSize = files.sumOf { it.length() }
 
+		// Step 3 - Purge files until we are under the max cache size threshold
         while (files.isNotEmpty() && totalFileSize > maxCacheSize) {
             totalFileSize -= files[0].length()
             files[0].delete()

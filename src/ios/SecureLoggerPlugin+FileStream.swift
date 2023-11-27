@@ -9,6 +9,34 @@ private let LOG_FILE_NAME_PREFIX = "SCR-LOG-V"
 private let LOG_FILE_NAME_EXTENSION = ".log"
 private let RFS_SERIALIZER_VERSION = 1
 
+extension String {
+    
+    // strips out the version from an existing file name so
+    // we can check if the file is stale and should be deleted
+    var fileSerializerVersion: Int? {
+        if !self.starts(with: LOG_FILE_NAME_PREFIX) {
+            return nil
+        }
+        
+        let startIndex = self.index(self.startIndex, offsetBy: LOG_FILE_NAME_PREFIX.count)
+        var endIndex = self.index(after: startIndex)
+        
+        while endIndex != self.endIndex && self[endIndex].isNumber {
+            endIndex = self.index(after: endIndex)
+        }
+        
+        return Int(self[startIndex..<endIndex])
+    }
+    
+    func isSerializedWith(_ version: Int) -> Bool {
+        return if let ownVersion = self.fileSerializerVersion {
+            ownVersion == version
+        } else {
+            false
+        }
+    }
+}
+
 public class SecureLoggerFileStreamOptions {
     private var mMaxFileSizeBytes: UInt64 = 2 * 1000 * 1000 // 2MB
     private var mMaxTotalCacheSizeBytes: UInt64 = 7 * 1000 * 1000 // 8MB
@@ -292,23 +320,35 @@ public class SecureLoggerFileStream {
         var files = outputDirectory
             .listFiles()
             .filter { $0.fileOrDirectoryExists() && $0.isRegularFile }
+        
+        if files.count <= 0 {
+            return
+        }
 
         files.sort(by: SecureLoggerFileStream.fileNameComparator)
-
-        // TODO: may want to try consolidating log files together
-        //      before deletion to avoid unnecessary data loss.
         
         var deleteRetryCounter = 0
         
-        func trackFileRemovalRetry() {
-            print("Failed to delete file at \(String(describing: files[0]))")
+        func trackFileRemovalRetry(_ index: Int = 0) {
+            print("Failed to delete file at \(String(describing: files[index]))")
             deleteRetryCounter += 1
             if (deleteRetryCounter >= 3) {
-                files.remove(at: 0)
+                print("failed to delete file after 3 attempts!")
+                files.remove(at: index)
                 deleteRetryCounter = 0
             }
         }
-
+        
+        // Step 1 - Purge any invalid files
+        for i in (0...files.count-1).reversed() {
+            let valid = files[i].lastPathComponent.isSerializedWith(RFS_SERIALIZER_VERSION)
+            if valid == false {
+                files[i].deleteFileSystemEntry()
+                files.remove(at: i)
+            }
+        }
+        
+        // Step 2 - Purge files until we are under the max file count threshold
         while (files.count > 0 && files.count > maxFileCount) {
             if files[0].deleteFileSystemEntry() {
                 files.remove(at: 0)
@@ -322,7 +362,8 @@ public class SecureLoggerFileStream {
         for fileUrl in files {
             totalFileSize += fileUrl.fileLength()
         }
-
+        
+        // Step 3 - Purge files until we are under the max cache size threshold
         while (files.count > 0 && totalFileSize > maxCacheSize) {
             let currentFileSize = files[0].fileLength()
             
