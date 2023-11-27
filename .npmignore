@@ -1,6 +1,8 @@
+/dev-assets
 /docs
 /scripts
 /src/ts
+/tmp
 
 .nvmrc
 tsconfig.json
