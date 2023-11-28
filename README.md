@@ -139,3 +139,7 @@ primaryTransport
 
 mainLogger.debug(`webview-to-native logging is initialized!`);
 ```
+
+### Examples
+
+- [Capacitor Mobile App](https://github.com/jospete/ionic-native-file-logging-example)
