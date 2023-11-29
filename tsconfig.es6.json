@@ -1,9 +1,9 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"target": "ES5",
-		"module": "CommonJS",
-		"outDir": "www/es5/",
+		"target": "ES2015",
+		"module": "ES2015",
+		"outDir": "www/es6/",
 		"declaration": false
 	}
 }

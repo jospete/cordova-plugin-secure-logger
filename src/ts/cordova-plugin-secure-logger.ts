@@ -1,4 +1,4 @@
-import { getPrimaryLoggerTransport, LogLevel, type LogEvent } from '@obsidize/rx-console';
+import { LogLevel, type LogEvent } from '@obsidize/rx-console';
 
 ////////////////////////////////////////////////////////////////
 // Generic Cordova Utilities
@@ -178,13 +178,18 @@ function remapWebViewLogLevel(level: number): SecureLogLevel {
 export class SecureLoggerCordovaInterface {
 
     /**
+     * Function ref that can be passed directly to
+     * `LoggerTransport.events().addListener(...)`
+     */
+    public readonly webviewEventListenerProxy = this.queueWebViewEvent.bind(this);
+
+    /**
      * Customizable callback to handle when event cache flush fails.
      */
     public eventFlushErrorCallback: (error: any) => void = noop;
 
     private readonly flushEventCacheProxy = this.onFlushEventCache.bind(this);
     private readonly flushEventCacheSuccessProxy = this.onFlushEventCacheSuccess.bind(this);
-    private readonly webviewEventListenerProxy = this.queueWebViewEvent.bind(this);
 
     private mEventCache: SecureLogEvent[] = [];
     private mCacheFlushInterval: any = null;
@@ -193,7 +198,7 @@ export class SecureLoggerCordovaInterface {
     constructor() {
         // start caching events immediately so we don't
         // drop any while cordova is still standing plugins up
-        this.enable();
+        this.setEventCacheFlushInterval();
     }
 
     /**
@@ -312,44 +317,6 @@ export class SecureLoggerCordovaInterface {
             tag: ev.tag,
             message: ev.message
         });
-    }
-
-    /**
-     * Adds the proxy listener from the rx-console primary transport.
-     * Called automatically by `enable()`.
-     */
-    public enableWebViewEventListener(): void {
-        getPrimaryLoggerTransport()
-            .events()
-            .addListener(this.webviewEventListenerProxy);
-    }
-
-    /**
-     * Removes the proxy listener from the rx-console primary transport.
-     * Called automatically by `disable()`.
-     */
-    public disableWebViewEventListener(): void {
-        getPrimaryLoggerTransport()
-            .events()
-            .removeListener(this.webviewEventListenerProxy);
-    }
-
-    /**
-     * Enables webview event capture and buffering.
-     * Activated automatically when this class is initialized.
-     */
-    public enable(): void {
-        this.setEventCacheFlushInterval();
-        this.enableWebViewEventListener();
-    }
-
-    /**
-     * Disables webview event capture and buffering.
-     * Call this when not running on native (e.g. regular web browser)
-     */
-    public disable(): void {
-        this.disableWebViewEventListener();
-        this.clearEventCacheFlushInterval();
     }
 
     /**

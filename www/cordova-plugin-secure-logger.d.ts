@@ -84,12 +84,16 @@ export interface ConfigureResult {
 }
 export declare class SecureLoggerCordovaInterface {
     /**
+     * Function ref that can be passed directly to
+     * `LoggerTransport.events().addListener(...)`
+     */
+    readonly webviewEventListenerProxy: (ev: LogEvent) => void;
+    /**
      * Customizable callback to handle when event cache flush fails.
      */
     eventFlushErrorCallback: (error: any) => void;
     private readonly flushEventCacheProxy;
     private readonly flushEventCacheSuccessProxy;
-    private readonly webviewEventListenerProxy;
     private mEventCache;
     private mCacheFlushInterval;
     private mMaxCachedEvents;
@@ -156,26 +160,6 @@ export declare class SecureLoggerCordovaInterface {
      * add adds it to the flush queue.
      */
     queueWebViewEvent(ev: LogEvent): void;
-    /**
-     * Adds the proxy listener from the rx-console primary transport.
-     * Called automatically by `enable()`.
-     */
-    enableWebViewEventListener(): void;
-    /**
-     * Removes the proxy listener from the rx-console primary transport.
-     * Called automatically by `disable()`.
-     */
-    disableWebViewEventListener(): void;
-    /**
-     * Enables webview event capture and buffering.
-     * Activated automatically when this class is initialized.
-     */
-    enable(): void;
-    /**
-     * Disables webview event capture and buffering.
-     * Call this when not running on native (e.g. regular web browser)
-     */
-    disable(): void;
     /**
      * Generates a log event that will be cached for the next
      * event flush cycle, where all cached events will be handed to the plugin.
