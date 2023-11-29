@@ -8,5 +8,8 @@ export {
     SecureLogger
 } from './cordova-plugin-secure-logger';
 export {
-    sendRxConsoleEventToNative
+    sendRxConsoleEventToNative,
+    disableWebviewListener,
+    disableWebviewToNative,
+    enableWebviewListener
 } from './rx-console';
