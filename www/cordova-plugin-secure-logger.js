@@ -1,7 +1,9 @@
 "use strict";
+////////////////////////////////////////////////////////////////
+// Generic Cordova Utilities
+////////////////////////////////////////////////////////////////
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecureLogger = exports.SecureLoggerCordovaInterface = void 0;
-var rx_console_1 = require("@obsidize/rx-console");
 function noop() {
     return;
 }
@@ -48,25 +50,8 @@ function normalizeConfigureResult(value) {
 function unwrapConfigureResult(value) {
     return (value && value.success) ? Promise.resolve(value) : Promise.reject(value);
 }
-function remapWebViewLogLevel(level) {
-    switch (level) {
-        case rx_console_1.LogLevel.VERBOSE: return 2 /* SecureLogLevel.VERBOSE */;
-        case rx_console_1.LogLevel.TRACE: return 2 /* SecureLogLevel.VERBOSE */;
-        case rx_console_1.LogLevel.DEBUG: return 3 /* SecureLogLevel.DEBUG */;
-        case rx_console_1.LogLevel.INFO: return 4 /* SecureLogLevel.INFO */;
-        case rx_console_1.LogLevel.WARN: return 5 /* SecureLogLevel.WARN */;
-        case rx_console_1.LogLevel.ERROR: return 6 /* SecureLogLevel.ERROR */;
-        case rx_console_1.LogLevel.FATAL: return 7 /* SecureLogLevel.FATAL */;
-        default: return 2 /* SecureLogLevel.VERBOSE */;
-    }
-}
 var SecureLoggerCordovaInterface = /** @class */ (function () {
     function SecureLoggerCordovaInterface() {
-        /**
-         * Function ref that can be passed directly to
-         * `LoggerTransport.events().addListener(...)`
-         */
-        this.webviewEventListenerProxy = this.queueWebViewEvent.bind(this);
         /**
          * Customizable callback to handle when event cache flush fails.
          */
@@ -175,18 +160,6 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         if (this.mEventCache.length > this.maxCachedEvents) {
             this.mEventCache.shift();
         }
-    };
-    /**
-     * Converts the given rx-console event to a native event,
-     * add adds it to the flush queue.
-     */
-    SecureLoggerCordovaInterface.prototype.queueWebViewEvent = function (ev) {
-        this.queueEvent({
-            level: remapWebViewLogLevel(ev.level),
-            timestamp: ev.timestamp,
-            tag: ev.tag,
-            message: ev.message
-        });
     };
     /**
      * Generates a log event that will be cached for the next

@@ -5,4 +5,5 @@
 /tmp
 
 .nvmrc
-tsconfig.json
+tsconfig.cordova.json
+tsconfig.es6.json

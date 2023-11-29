@@ -1,5 +1,3 @@
-import { LogLevel, type LogEvent } from '@obsidize/rx-console';
-
 ////////////////////////////////////////////////////////////////
 // Generic Cordova Utilities
 ////////////////////////////////////////////////////////////////
@@ -162,26 +160,7 @@ function unwrapConfigureResult(value: ConfigureResult): Promise<ConfigureResult>
     return (value && value.success) ? Promise.resolve(value) : Promise.reject(value);
 }
 
-function remapWebViewLogLevel(level: number): SecureLogLevel {
-    switch (level) {
-        case LogLevel.VERBOSE:  return SecureLogLevel.VERBOSE;
-        case LogLevel.TRACE:    return SecureLogLevel.VERBOSE;
-        case LogLevel.DEBUG:    return SecureLogLevel.DEBUG;
-        case LogLevel.INFO:     return SecureLogLevel.INFO;
-        case LogLevel.WARN:     return SecureLogLevel.WARN;
-        case LogLevel.ERROR:    return SecureLogLevel.ERROR;
-        case LogLevel.FATAL:    return SecureLogLevel.FATAL;
-        default:                return SecureLogLevel.VERBOSE;
-    }
-}
-
 export class SecureLoggerCordovaInterface {
-
-    /**
-     * Function ref that can be passed directly to
-     * `LoggerTransport.events().addListener(...)`
-     */
-    public readonly webviewEventListenerProxy = this.queueWebViewEvent.bind(this);
 
     /**
      * Customizable callback to handle when event cache flush fails.
@@ -304,19 +283,6 @@ export class SecureLoggerCordovaInterface {
         if (this.mEventCache.length > this.maxCachedEvents) {
             this.mEventCache.shift();
         }
-    }
-
-    /**
-     * Converts the given rx-console event to a native event,
-     * add adds it to the flush queue.
-     */
-    public queueWebViewEvent(ev: LogEvent): void {
-        this.queueEvent({
-            level: remapWebViewLogLevel(ev.level),
-            timestamp: ev.timestamp,
-            tag: ev.tag,
-            message: ev.message
-        });
     }
 
     /**

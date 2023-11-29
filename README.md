@@ -54,7 +54,7 @@ for webview log capture / filtering.
 
 ```typescript
 import { Logger, getPrimaryLoggerTransport } from '@obsidize/rx-console';
-import { SecureLogger } from 'cordova-plugin-secure-logger';
+import { sendRxConsoleEventToNative } from 'cordova-plugin-secure-logger';
 
 const primaryTransport = getPrimaryLoggerTransport();
 
@@ -62,7 +62,7 @@ const primaryTransport = getPrimaryLoggerTransport();
 // NOTE: this only needs to be done once, on application startup.
 primaryTransport
   .events()
-  .addListener(SecureLogger.webviewEventListenerProxy);
+  .addListener(sendRxConsoleEventToNative);
 
 class ExampleService {
     private readonly logger = new Logger('ExampleService');

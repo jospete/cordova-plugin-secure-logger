@@ -1,4 +1,3 @@
-import { type LogEvent } from '@obsidize/rx-console';
 /**
  * Values to indicate the level of an event.
  * mirrors levels found in android.util.Log to minimize plugin friction.
@@ -84,11 +83,6 @@ export interface ConfigureResult {
 }
 export declare class SecureLoggerCordovaInterface {
     /**
-     * Function ref that can be passed directly to
-     * `LoggerTransport.events().addListener(...)`
-     */
-    readonly webviewEventListenerProxy: (ev: LogEvent) => void;
-    /**
      * Customizable callback to handle when event cache flush fails.
      */
     eventFlushErrorCallback: (error: any) => void;
@@ -155,11 +149,6 @@ export declare class SecureLoggerCordovaInterface {
      * which will be flushed on a fixed interval.
      */
     queueEvent(ev: SecureLogEvent): void;
-    /**
-     * Converts the given rx-console event to a native event,
-     * add adds it to the flush queue.
-     */
-    queueWebViewEvent(ev: LogEvent): void;
     /**
      * Generates a log event that will be cached for the next
      * event flush cycle, where all cached events will be handed to the plugin.

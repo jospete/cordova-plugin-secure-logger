@@ -6,7 +6,7 @@
 		"typeRoots": ["node_modules/@types"],
 		"types": ["cordova"],
 		"lib": ["ES5", "DOM", "ES2015"],
-		"declaration": true,
+		"declaration": false,
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
@@ -14,7 +14,7 @@
 	},
 	"compileOnSave": true,
 	"include": [
-        "src/ts/**/*.ts"
+        "src/ts/cordova-plugin-secure-logger.ts"
     ],
 	"exclude": [
         "node_modules",
