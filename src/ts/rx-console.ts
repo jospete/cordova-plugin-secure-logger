@@ -1,4 +1,4 @@
-import { LogLevel, getPrimaryLoggerTransport, type LogEvent } from '@obsidize/rx-console';
+import { type LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
 function remapWebViewLogLevel(level: number): SecureLogLevel {
@@ -37,8 +37,10 @@ export function sendRxConsoleEventToNative(ev: LogEvent): void {
  * interval is enabled by default when `SecureLogger`
  * is initialized.
  */
-export function enableWebviewListener(): void {
-    getPrimaryLoggerTransport().addListener(sendRxConsoleEventToNative);
+export function enableWebviewListener(
+    transport: LoggerTransport = getPrimaryLoggerTransport()
+): void {
+    transport.addListener(sendRxConsoleEventToNative);
 }
 
 /**
@@ -46,8 +48,10 @@ export function enableWebviewListener(): void {
  * No events will be sent to `SecureLogger` from rx-console
  * package after this is called.
  */
-export function disableWebviewListener(): void {
-    getPrimaryLoggerTransport().removeListener(sendRxConsoleEventToNative);
+export function disableWebviewListener(
+    transport: LoggerTransport = getPrimaryLoggerTransport()
+): void {
+    transport.removeListener(sendRxConsoleEventToNative);
 }
 
 /**
@@ -56,9 +60,9 @@ export function disableWebviewListener(): void {
  * Call this if you need to turn the webview side of the plugin
  * back on after calling `disableWebviewToNative()`.
  */
-export function enableWebviewToNative(): void {
+export function enableWebviewToNative(transport?: LoggerTransport): void {
     SecureLogger.setEventCacheFlushInterval();
-    enableWebviewListener();
+    enableWebviewListener(transport);
 }
 
 /**
@@ -67,7 +71,7 @@ export function enableWebviewToNative(): void {
  * Call this when you're not running in a cordova or capacitor environment
  * (e.g. vanilla webapp in a browser)
  */
-export function disableWebviewToNative(): void {
-    disableWebviewListener();
+export function disableWebviewToNative(transport?: LoggerTransport): void {
+    disableWebviewListener(transport);
     SecureLogger.clearEventCacheFlushInterval();
 }
