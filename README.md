@@ -53,16 +53,12 @@ This plugin uses [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/
 for webview log capture / filtering.
 
 ```typescript
-import { Logger, getPrimaryLoggerTransport } from '@obsidize/rx-console';
-import { sendRxConsoleEventToNative } from 'cordova-plugin-secure-logger';
+import { Logger } from '@obsidize/rx-console';
+import { enableWebviewListener } from 'cordova-plugin-secure-logger';
 
-const primaryTransport = getPrimaryLoggerTransport();
-
-// Wire up the primary transport with secure logger webview proxy.
+// Wire up the primary rx-console transport with secure logger webview proxy.
 // NOTE: this only needs to be done once, on application startup.
-primaryTransport
-  .events()
-  .addListener(sendRxConsoleEventToNative);
+enableWebviewListener();
 
 class ExampleService {
     private readonly logger = new Logger('ExampleService');

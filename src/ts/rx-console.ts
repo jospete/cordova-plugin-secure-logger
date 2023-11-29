@@ -1,4 +1,4 @@
-import { LogLevel, type LogEvent } from '@obsidize/rx-console';
+import { LogLevel, getPrimaryLoggerTransport, type LogEvent } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
 function remapWebViewLogLevel(level: number): SecureLogLevel {
@@ -25,4 +25,33 @@ export function sendRxConsoleEventToNative(ev: LogEvent): void {
         tag: ev.tag,
         message: ev.message
     });
+}
+
+/**
+ * Activate event capture proxying for rx-console.
+ * Events from rx-console package will be sent to
+ * `SecureLogger` automatically after this is called.
+ */
+export function enableWebviewListener(): void {
+    getPrimaryLoggerTransport().addListener(sendRxConsoleEventToNative);
+}
+
+/**
+ * Disables event capture proxying for rx-console.
+ * No events will be sent to `SecureLogger` from rx-console
+ * package after this is called.
+ */
+export function disableWebviewListener(): void {
+    getPrimaryLoggerTransport().removeListener(sendRxConsoleEventToNative);
+}
+
+/**
+ * Disables both rx-console event capture AND the
+ * automated event cache flush interval on the plugin.
+ * Call this when you're not running in a cordova or capacitor environment
+ * (e.g. vanilla webapp in a browser)
+ */
+export function disableWebviewToNative(): void {
+    disableWebviewListener();
+    SecureLogger.clearEventCacheFlushInterval();
 }
