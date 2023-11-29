@@ -1,13 +1,15 @@
 {
 	"compilerOptions": {
-		"target": "ES5",
-		"module": "CommonJS",
+		"target": "ES2015",
+		"module": "ES2015",
 		"outDir": "www/",
 		"typeRoots": ["node_modules/@types"],
 		"types": ["cordova"],
 		"lib": ["ES5", "DOM", "ES2015"],
 		"declaration": true,
 		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"moduleResolution": "node"
 	},
 	"compileOnSave": true,

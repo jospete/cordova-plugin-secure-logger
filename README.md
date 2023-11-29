@@ -4,9 +4,6 @@ Cordova plugin to capture both webview and native log events and store them secu
 
 **Also works out-the-box with [Capacitor](https://capacitorjs.com/)!**
 
-Pairs well with [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-console)
-for capturing and forwarding webview events.
-
 ## Features / Goals
 
 - Ability to capture logs both from the webview and native side into a common **local** recording outlet
@@ -48,39 +45,43 @@ Source documentation can be found [here](https://jospete.github.io/cordova-plugi
 
 ### Logging Events
 
-You can produce logs for this plugin on both the webview and native side like so
+You can produce logs for this plugin on both the webview and native side
 
-- TypeScript / JavaScript:
+#### TypeScript / JavaScript (webview)
+
+This plugin uses [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-console)
+for webview log capture / filtering. The javascript interface for this plugin
+automatically hooks into rx-console's primary transport on startup.
 
 ```typescript
-import { SecureLogger } from 'cordova-plugin-secure-logger';
-
-const tag = `ExampleService`;
+import { Logger } from '@obsidize/rx-console';
 
 class ExampleService {
+    private readonly logger = new Logger('ExampleService');
 
     public test(): void {
-        SecureLogger.debug(tag, `This will be stored in an encrypted log file`);
+        this.logger.debug(`This will be stored in an encrypted log file`);
     }
 
     public someOperation(): void {
         const result = JSON.stringify({error: `transfunctioner stopped combobulating`});
-        SecureLogger.warn(tag, `Something bad happened! -> ${result}`);
+        this.logger.warn(tag, `Something bad happened! -> ${result}`);
     }
 }
 
 const service = new ExampleService();
 
-// log events will automatically get buffered and 
-// sent to the plugin on a fixed interval
+// Log events from rx-console will automatically get buffered and 
+// sent to the plugin on a fixed interval.
+// See `SecureLogger.enable()` for more info.
 service.test();
 service.someOperation();
 ```
 
-- Android:
+#### Android:
 
 This plugin uses [Timber](https://github.com/JakeWharton/timber) for Android native log capture.
-Simply replace `Log.xxx()` calls from `android.util.Log` with `Timer.xxx()` from `timber.log.Timber`
+Replace `Log.xxx()` calls from `android.util.Log` with `Timer.xxx()` from `timber.log.Timber`
 in other plugins, and those logs will automatically be captured by this plugin.
 
 ```kotlin
@@ -91,10 +92,10 @@ import timber.log.Timber
 Timber.d("Logging stuff on native android for the secure logger plugin! Yay native logs!")
 ```
 
-- iOS:
+#### iOS:
 
 This plugin uses [CocoaLumberjack](https://github.com/CocoaLumberjack/CocoaLumberjack) for iOS native log capture.
-Simply replace `print()` / `NSLog()` calls with `DDLogXXXX()`
+Replace `print()` / `NSLog()` calls with `DDLogXXXX()`
 in other plugins, and those logs will automatically be captured by this plugin.
 
 ```swift
@@ -113,31 +114,11 @@ To grab a snapshot of the current log cache:
 import { SecureLogger } from 'cordova-plugin-secure-logger';
 
 async function uploadLogs(): Promise<void> {
-    const logCacheData: ArrayBuffer = await SecureLogger.getCacheBlob();
-    const bodyBlob = new Blob([logCacheData]);
+    const logCacheData = await SecureLogger.getCacheBlob();
+    const bodyBlob = new Blob([logCacheData], { type: 'application/octet-stream' });
     // upload / share it somewhere
     await http.post('/log-capture', bodyBlob);
 }
-```
-
-### Integrations
-
-You can use [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-console) to put your webview logging on overdrive
-
-```typescript
-/* logger-bootstrap.ts */
-import { getPrimaryLoggerTransport, Logger } from '@obsidize/rx-console';
-import { sendRxConsoleEventToNative } from 'cordova-plugin-secure-logger/www/rx-console';
-
-const primaryTransport = getPrimaryLoggerTransport();
-const mainLogger = new Logger('Main');
-
-primaryTransport
-    .enableDefaultBroadcast()
-    .events()
-    .addListener(sendRxConsoleEventToNative);
-
-mainLogger.debug(`webview-to-native logging is initialized!`);
 ```
 
 ### Examples

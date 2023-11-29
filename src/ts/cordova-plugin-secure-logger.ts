@@ -1,3 +1,5 @@
+import { getPrimaryLoggerTransport, LogLevel, type LogEvent } from '@obsidize/rx-console';
+
 ////////////////////////////////////////////////////////////////
 // Generic Cordova Utilities
 ////////////////////////////////////////////////////////////////
@@ -160,6 +162,19 @@ function unwrapConfigureResult(value: ConfigureResult): Promise<ConfigureResult>
     return (value && value.success) ? Promise.resolve(value) : Promise.reject(value);
 }
 
+function remapWebViewLogLevel(level: number): SecureLogLevel {
+    switch (level) {
+        case LogLevel.VERBOSE:  return SecureLogLevel.VERBOSE;
+        case LogLevel.TRACE:    return SecureLogLevel.VERBOSE;
+        case LogLevel.DEBUG:    return SecureLogLevel.DEBUG;
+        case LogLevel.INFO:     return SecureLogLevel.INFO;
+        case LogLevel.WARN:     return SecureLogLevel.WARN;
+        case LogLevel.ERROR:    return SecureLogLevel.ERROR;
+        case LogLevel.FATAL:    return SecureLogLevel.FATAL;
+        default:                return SecureLogLevel.VERBOSE;
+    }
+}
+
 export class SecureLoggerCordovaInterface {
 
     /**
@@ -169,6 +184,8 @@ export class SecureLoggerCordovaInterface {
 
     private readonly flushEventCacheProxy = this.onFlushEventCache.bind(this);
     private readonly flushEventCacheSuccessProxy = this.onFlushEventCacheSuccess.bind(this);
+    private readonly webviewEventListenerProxy = this.queueWebViewEvent.bind(this);
+
     private mEventCache: SecureLogEvent[] = [];
     private mCacheFlushInterval: any = null;
     private mMaxCachedEvents: number = 1000;
@@ -176,7 +193,7 @@ export class SecureLoggerCordovaInterface {
     constructor() {
         // start caching events immediately so we don't
         // drop any while cordova is still standing plugins up
-        this.setEventCacheFlushInterval();
+        this.enable();
     }
 
     /**
@@ -282,6 +299,57 @@ export class SecureLoggerCordovaInterface {
         if (this.mEventCache.length > this.maxCachedEvents) {
             this.mEventCache.shift();
         }
+    }
+
+    /**
+     * Converts the given rx-console event to a native event,
+     * add adds it to the flush queue.
+     */
+    public queueWebViewEvent(ev: LogEvent): void {
+        this.queueEvent({
+            level: remapWebViewLogLevel(ev.level),
+            timestamp: ev.timestamp,
+            tag: ev.tag,
+            message: ev.message
+        });
+    }
+
+    /**
+     * Adds the proxy listener from the rx-console primary transport.
+     * Called automatically by `enable()`.
+     */
+    public enableWebViewEventListener(): void {
+        getPrimaryLoggerTransport()
+            .events()
+            .addListener(this.webviewEventListenerProxy);
+    }
+
+    /**
+     * Removes the proxy listener from the rx-console primary transport.
+     * Called automatically by `disable()`.
+     */
+    public disableWebViewEventListener(): void {
+        getPrimaryLoggerTransport()
+            .events()
+            .removeListener(this.webviewEventListenerProxy);
+    }
+
+    /**
+     * Enables webview event capture and buffering.
+     * Activated automatically when this class is initialized.
+     */
+    public enable(): void {
+        this.setEventCacheFlushInterval();
+        this.enableWebViewEventListener();
+    }
+
+    /**
+     * Disables webview event capture and buffering.
+     * Call this when not running on native (e.g. regular web browser)
+     */
+    public disable(): void {
+        this.disableWebViewEventListener();
+        this.clearEventCacheFlushInterval();
     }
 
     /**
