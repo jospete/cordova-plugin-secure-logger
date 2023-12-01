@@ -13,7 +13,7 @@
     "docs": "typedoc ./src/ts/index.ts --out ./docs",
     "docs:open": "open ./docs/index.html",
     "version:sync": "node ./scripts/version-sync.js",
-    "version": "run-s build docs version:sync",
+    "version": "run-s build version:sync docs",
     "version:patch": "npm version patch",
     "version:publish": "node ./scripts/version-publish.js",
     "npm:publish": "npm publish",
