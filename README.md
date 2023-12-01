@@ -9,6 +9,7 @@ Cordova plugin to capture both webview and native log events and store them secu
 - Ability to capture logs both from the webview and native side into a common **local** recording outlet
 - Encrypt data before it hits the disk to protect sensitive user data
 - Automatically prune oldest logs to prevent infinitely expanding log data storage
+- Ability to load logs from disk, combined and unencrypted, so they can be uploaded to a server as needed
 
 ## Why make this plugin?
 
@@ -39,9 +40,25 @@ cordova plugin add cordova-plugin-secure-logger@1.0.9
 
 ## Usage
 
-### API
+### Documentation
 
 Source documentation can be found [here](https://jospete.github.io/cordova-plugin-secure-logger/)
+
+### Plugin Initialization
+
+```typescript
+/* In your app initialize logic */
+import { SecureLogger, SecureLogLevel, enableWebviewListener } from 'cordova-plugin-secure-logger';
+
+// Wire up the primary rx-console transport with secure logger webview proxy.
+enableWebviewListener();
+
+// after platform ready event
+await SecureLogger.configure({
+    minLevel: SecureLogLevel.DEBUG,
+    // See documentation for other available options
+});
+```
 
 ### Logging Events
 
@@ -50,43 +67,38 @@ You can produce logs for this plugin on both the webview and native side
 #### TypeScript / JavaScript (webview)
 
 This plugin uses [@obsidize/rx-console](https://www.npmjs.com/package/@obsidize/rx-console)
-for webview log capture / filtering.
+for webview log capture / filtering. See [rx-console docs](https://jospete.github.io/obsidize-rx-console/)
+for proper usage of this module.
 
 ```typescript
 import { Logger } from '@obsidize/rx-console';
-import { enableWebviewListener } from 'cordova-plugin-secure-logger';
 
-// Wire up the primary rx-console transport with secure logger webview proxy.
-// NOTE: this only needs to be done once, on application startup.
-enableWebviewListener();
-
-class ExampleService {
-    private readonly logger = new Logger('ExampleService');
-
-    public test(): void {
-        this.logger.debug(`This will be stored in an encrypted log file`);
-    }
-
-    public someOperation(): void {
-        const result = JSON.stringify({error: `transfunctioner stopped combobulating`});
-        this.logger.warn(tag, `Something bad happened! -> ${result}`);
-    }
-}
-
-const service = new ExampleService();
+const logger = new Logger('ExampleService');
 
 // Log events from rx-console will automatically get buffered and 
 // sent to the plugin on a fixed interval.
-// See `SecureLogger.enable()` for more info.
-service.test();
-service.someOperation();
+logger.debug(`This will be stored in an encrypted log file`);
+
+const someError = JSON.stringify({error: `transfunctioner stopped combobulating`});
+logger.warn(tag, `Something bad happened! -> ${someError}`);
 ```
 
 #### Android:
 
 This plugin uses [Timber](https://github.com/JakeWharton/timber) for Android native log capture.
-Replace `Log.xxx()` calls from `android.util.Log` with `Timer.xxx()` from `timber.log.Timber`
+Replace `Log.xxx()` calls from `android.util.Log` with `Timber.xxx()` from `timber.log.Timber`
 in other plugins, and those logs will automatically be captured by this plugin.
+
+In `plugin.xml`:
+
+```xml
+<platform name="android">
+    ...
+    <framework src="com.jakewharton.timber:timber:5.0.1" />
+</platform>
+```
+
+In Kotlin / Java:
 
 ```kotlin
 import timber.log.Timber
@@ -101,6 +113,24 @@ Timber.d("Logging stuff on native android for the secure logger plugin! Yay nati
 This plugin uses [CocoaLumberjack](https://github.com/CocoaLumberjack/CocoaLumberjack) for iOS native log capture.
 Replace `print()` / `NSLog()` calls with `DDLogXXXX()`
 in other plugins, and those logs will automatically be captured by this plugin.
+
+In `plugin.xml`:
+
+```xml
+<platform name="ios">
+    ...
+    <podspec>
+        <config>
+            <source url="https://cdn.cocoapods.org/" />
+        </config>
+        <pods use-frameworks="true">
+            <pod name="CocoaLumberjack/Swift" spec="~> 3.8" />
+        </pods>
+    </podspec>
+</platform>
+```
+
+In Swift / Objective-C:
 
 ```swift
 import CocoaLumberjack
