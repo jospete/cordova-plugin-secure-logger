@@ -29,13 +29,13 @@ npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#1.0.
 NPM / Capacitor:
 
 ```bash
-npm i -P -E cordova-plugin-secure-logger@1.0.10
+npm i -P -E cordova-plugin-secure-logger
 ```
 
 Cordova:
 
 ```bash
-cordova plugin add cordova-plugin-secure-logger@1.0.10
+cordova plugin add cordova-plugin-secure-logger
 ```
 
 ## Usage

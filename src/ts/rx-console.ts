@@ -1,7 +1,7 @@
-import { type LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport } from '@obsidize/rx-console';
+import { type LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport, stringifyAndJoin } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
-function remapWebViewLogLevel(level: number): SecureLogLevel {
+function remapWebviewLogLevel(level: number): SecureLogLevel {
     switch (level) {
         case LogLevel.VERBOSE:  return SecureLogLevel.VERBOSE;
         case LogLevel.TRACE:    return SecureLogLevel.VERBOSE;
@@ -14,16 +14,26 @@ function remapWebViewLogLevel(level: number): SecureLogLevel {
     }
 }
 
+function getFullWebviewEventMessage(ev: LogEvent): string {
+
+    // need to check this in case a pre-6.1.6 version is installed
+    if (typeof (ev.getMessageWithParams) === 'function') {
+        return ev.getMessageWithParams();
+    }
+
+    return ev.message + stringifyAndJoin(ev.params);
+}
+
 /**
  * Converts the given rx-console event to a native event,
  * add adds it to the SecureLogger flush queue.
  */
 export function sendRxConsoleEventToNative(ev: LogEvent): void {
     SecureLogger.queueEvent({
-        level: remapWebViewLogLevel(ev.level),
         timestamp: ev.timestamp,
         tag: ev.tag,
-        message: ev.message
+        level: remapWebviewLogLevel(ev.level),
+        message: getFullWebviewEventMessage(ev)
     });
 }
 
