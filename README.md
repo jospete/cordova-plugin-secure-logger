@@ -23,19 +23,19 @@ best thing is to capture logs in a secure sandbox - which is the aim of this plu
 Github:
 
 ```bash
-npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#1.0.9
+npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#1.0.10
 ```
 
 NPM / Capacitor:
 
 ```bash
-npm i -P -E cordova-plugin-secure-logger@1.0.9
+npm i -P -E cordova-plugin-secure-logger@1.0.10
 ```
 
 Cordova:
 
 ```bash
-cordova plugin add cordova-plugin-secure-logger@1.0.9
+cordova plugin add cordova-plugin-secure-logger@1.0.10
 ```
 
 ## Usage
