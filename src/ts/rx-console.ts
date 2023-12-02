@@ -83,5 +83,5 @@ export function enableWebviewToNative(transport?: LoggerTransport): void {
  */
 export function disableWebviewToNative(transport?: LoggerTransport): void {
     disableWebviewListener(transport);
-    SecureLogger.clearEventCacheFlushInterval();
+    SecureLogger.disableEventCaching();
 }
