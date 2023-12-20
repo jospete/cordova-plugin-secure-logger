@@ -128,6 +128,9 @@ class RotatingFileStream(
 	private val maxCacheSize: Long
 		get() = options.maxTotalCacheSizeBytes
 
+	val destroyed: Boolean
+		get() = mDestroyed
+
 	var options: RotatingFileStreamOptions
 		get() {
 			synchronized(mLock) {
