@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+/*
+Applies the version set by the `npm version` command
+to other source files which require version metadata
+(e.g. the cordova plugin.xml file)
+
+Usage:
+node ./scripts/version-sync.js
+*/
+
 const fs = require('fs');
 const {version} = require('../package.json');
 

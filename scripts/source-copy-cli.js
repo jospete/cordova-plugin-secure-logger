@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+/*
+Generates a copy script under the `tmp/` directory which
+can be used to backfill source files into this repo.
+
+Usage:
+node ./scripts/source-copy-cli.js [android|ios] [./relative/path/to/source/files]
+*/
+
 const fs = require('fs');
 const path = require('path');
 

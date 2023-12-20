@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+/*
+Automates changes needed for iOS source files after
+they have been backfilled into this repo from a test xcode project.
+
+Usage:
+node ./scripts/fix-ios-source-imports.js
+*/
+
 const fs = require('fs');
 const path = require('path');
 
