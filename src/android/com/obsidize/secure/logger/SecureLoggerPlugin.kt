@@ -120,11 +120,7 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 				cordova.threadPool.execute {
 					try {
 						val combinedBytes = rotatingFileStream.toBlob()
-						if (combinedBytes != null) {
-							callbackContext.success(combinedBytes)
-						} else {
-							callbackContext.error("cannot fetch cache blob after app destroy")
-						}
+						callbackContext.success(combinedBytes)
 					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
 					}

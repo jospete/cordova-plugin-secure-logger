@@ -203,7 +203,7 @@ class RotatingFileStream(
 		java.security.GeneralSecurityException::class,
 		RotatingFileStreamDestroyedException::class
 	)
-	fun toBlob(): ByteArray? {
+	fun toBlob(): ByteArray {
 		synchronized(mLock) {
 
 			assertNotDestroyed()
