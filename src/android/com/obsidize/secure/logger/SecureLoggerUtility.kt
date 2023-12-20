@@ -26,12 +26,12 @@ private val iso8601 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US
 private val timezoneUtc = TimeZone.getTimeZone("UTC")
 
 fun timestampOf(date: Date): String {
-    iso8601.timeZone = timezoneUtc
-    return iso8601.format(date)
+	iso8601.timeZone = timezoneUtc
+	return iso8601.format(date)
 }
 
 fun currentTimeMillis(): Long {
-    return Date().time
+	return Date().time
 }
 
 fun clampInt(value: Int, min: Int, max: Int): Int {
@@ -45,26 +45,26 @@ fun clampLogLevel(level: Int): Int {
 }
 
 fun serializeLogLevel(priority: Int): String {
-    return when (priority) {
-        Log.VERBOSE -> PRIORITY_VERBOSE
-        Log.DEBUG -> PRIORITY_DEBUG
-        Log.INFO -> PRIORITY_INFO
-        Log.WARN -> PRIORITY_WARN
-        Log.ERROR -> PRIORITY_ERROR
-        Log.ASSERT -> PRIORITY_ASSERT
-        else -> PRIORITY_DEBUG
-    }
+	return when (priority) {
+		Log.VERBOSE -> PRIORITY_VERBOSE
+		Log.DEBUG -> PRIORITY_DEBUG
+		Log.INFO -> PRIORITY_INFO
+		Log.WARN -> PRIORITY_WARN
+		Log.ERROR -> PRIORITY_ERROR
+		Log.ASSERT -> PRIORITY_ASSERT
+		else -> PRIORITY_DEBUG
+	}
 }
 
 fun serializeNativeEvent(priority: Int, tag: String?, message: String, t: Throwable?): String {
-    val timestamp = timestampOf(Date())
-    val throwDump = if (t != null) " :: ${t.stackTrace}" else ""
-    return "$timestamp [${serializeLogLevel(priority)}] [${tag ?: NO_TAG}] $message$throwDump"
+	val timestamp = timestampOf(Date())
+	val throwDump = if (t != null) " :: ${t.stackTrace}" else ""
+	return "$timestamp [${serializeLogLevel(priority)}] [${tag ?: NO_TAG}] $message$throwDump"
 }
 
 fun serializeWebEvent(timestampMillis: Long, level: Int, tag: String, message: String): String {
-    val timestamp = timestampOf(Date(timestampMillis))
-    return "$timestamp [${serializeLogLevel(level)}] [webview-$tag] $message"
+	val timestamp = timestampOf(Date(timestampMillis))
+	return "$timestamp [${serializeLogLevel(level)}] [webview-$tag] $message"
 }
 
 fun getWebEventLevel(obj: JSONObject): Int {
@@ -73,26 +73,26 @@ fun getWebEventLevel(obj: JSONObject): Int {
 
 fun serializeWebEventFromJSON(obj: JSONObject): String {
 
-    var timestamp = obj.optLong("timestamp", -1)
-    val level = getWebEventLevel(obj)
-    val tag = obj.optString("tag", NO_TAG)
-    val message = obj.optString("message", MISSING_MESSAGE)
+	var timestamp = obj.optLong("timestamp", -1)
+	val level = getWebEventLevel(obj)
+	val tag = obj.optString("tag", NO_TAG)
+	val message = obj.optString("message", MISSING_MESSAGE)
 
-    if (timestamp < 0)
-        timestamp = currentTimeMillis()
+	if (timestamp < 0)
+		timestamp = currentTimeMillis()
 
-    return serializeWebEvent(timestamp, level, tag, message)
+	return serializeWebEvent(timestamp, level, tag, message)
 }
 
 @Throws(IOException::class)
 fun InputStream.pipeTo(out: OutputStream): Long {
-    Objects.requireNonNull(out, "out")
-    var transferred: Long = 0
-    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-    var read: Int
-    while (this.read(buffer, 0, DEFAULT_BUFFER_SIZE).also { read = it } >= 0) {
-        out.write(buffer, 0, read)
-        transferred += read.toLong()
-    }
-    return transferred
+	Objects.requireNonNull(out, "out")
+	var transferred: Long = 0
+	val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+	var read: Int
+	while (this.read(buffer, 0, DEFAULT_BUFFER_SIZE).also { read = it } >= 0) {
+		out.write(buffer, 0, read)
+		transferred += read.toLong()
+	}
+	return transferred
 }

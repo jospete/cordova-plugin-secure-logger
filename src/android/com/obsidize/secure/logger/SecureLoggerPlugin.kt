@@ -15,6 +15,7 @@ private const val ACTION_CAPTURE = "capture"
 private const val ACTION_CAPTURE_TEXT = "captureText"
 private const val ACTION_CLEAR_CACHE = "clearCache"
 private const val ACTION_GET_CACHE_BLOB = "getCacheBlob"
+private const val ACTION_CLOSE_ACTIVE_STREAM = "closeActiveStream"
 private const val ACTION_CONFIGURE = "configure"
 private const val CONFIG_RESULT_KEY_SUCCESS = "success"
 private const val CONFIG_RESULT_KEY_ERRORS = "errors"
@@ -23,113 +24,133 @@ private const val CONFIG_ERROR_KEY_ERROR = "error"
 private const val CONFIG_KEY_MIN_LEVEL = "minLevel"
 
 class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
-    private lateinit var rotatingFileStream: RotatingFileStream
-    private lateinit var timberFileProxy: TimberFileProxy
+	private lateinit var rotatingFileStream: RotatingFileStream
+	private lateinit var timberFileProxy: TimberFileProxy
 	private lateinit var logsConfigFile: File
-    private var defaultExceptionHandler: UncaughtExceptionHandler? = null
-    private var timberDebug: Timber.DebugTree? = null
+	private var defaultExceptionHandler: UncaughtExceptionHandler? = null
+	private var timberDebug: Timber.DebugTree? = null
 
-    override fun pluginInitialize() {
-        if (BuildConfig.DEBUG) {
-            timberDebug = Timber.DebugTree()
-            Timber.plant(timberDebug!!)
-        }
+	override fun pluginInitialize() {
+		if (BuildConfig.DEBUG) {
+			timberDebug = Timber.DebugTree()
+			Timber.plant(timberDebug!!)
+		}
 
-        val logDir = File(cordova.context.cacheDir.path, LOG_DIR)
-        val streamOptions = RotatingFileStreamOptions(logDir)
+		val logDir = File(cordova.context.cacheDir.path, LOG_DIR)
+		val streamOptions = RotatingFileStreamOptions(logDir)
 
 		logsConfigFile = File(cordova.context.cacheDir.path, LOG_CONFIG_FILE)
-        defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
-        rotatingFileStream = RotatingFileStream(cordova.context, streamOptions)
-        timberFileProxy = TimberFileProxy(rotatingFileStream)
+		defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+		rotatingFileStream = RotatingFileStream(cordova.context, streamOptions)
+		timberFileProxy = TimberFileProxy(rotatingFileStream)
 
 		tryLoadStoredConfig()
-        Timber.plant(timberFileProxy)
-        Thread.setDefaultUncaughtExceptionHandler(this)
-    }
+		Timber.plant(timberFileProxy)
+		Thread.setDefaultUncaughtExceptionHandler(this)
+	}
 
-    override fun uncaughtException(t: Thread, e: Throwable) {
-        Timber.e("Uncaught Native Error!", e)
-        defaultExceptionHandler?.uncaughtException(t, e)
-    }
+	override fun uncaughtException(t: Thread, e: Throwable) {
+		Timber.e("Uncaught Native Error!", e)
+		defaultExceptionHandler?.uncaughtException(t, e)
+	}
 
-    override fun onDestroy() {
-        Timber.uproot(timberFileProxy)
+	override fun onDestroy() {
+		Timber.uproot(timberFileProxy)
 
-        if (timberDebug != null)
-            Timber.uproot(timberDebug!!)
+		if (timberDebug != null)
+			Timber.uproot(timberDebug!!)
 
-        rotatingFileStream.destroy()
-    }
+		rotatingFileStream.destroy()
+	}
 
-    override fun execute(action: String, args: JSONArray, callbackContext: CallbackContext): Boolean {
-        Timber.v("execute action '$action'")
-        when (action) {
+	override fun execute(
+		action: String,
+		args: JSONArray,
+		callbackContext: CallbackContext
+	): Boolean {
+		Timber.v("execute action '$action'")
+		when (action) {
 			ACTION_CAPTURE -> {
-                cordova.threadPool.execute {
-                    try {
-                        val eventList = args.optJSONArray(0)
-                        captureLogEvents(eventList)
-                        callbackContext.success()
-                    } catch (ex: Exception) {
+				cordova.threadPool.execute {
+					try {
+						val eventList = args.optJSONArray(0)
+						captureLogEvents(eventList)
+						callbackContext.success()
+					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
-                    }
-                }
-            }
+					}
+				}
+			}
+
 			ACTION_CAPTURE_TEXT -> {
-                cordova.threadPool.execute {
-                    try {
-                        val text = args.optString(0, "")
-                        rotatingFileStream.append(text)
-                        callbackContext.success()
-                    } catch (ex: Exception) {
+				cordova.threadPool.execute {
+					try {
+						val text = args.optString(0, "")
+						rotatingFileStream.append(text)
+						callbackContext.success()
+					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
-                    }
-                }
-            }
+					}
+				}
+			}
+
 			ACTION_CLEAR_CACHE -> {
-                cordova.threadPool.execute {
-                    try {
-                        val success = rotatingFileStream.deleteAllFiles()
-                        callbackContext.success(success.toString())
-                    } catch (ex: Exception) {
+				cordova.threadPool.execute {
+					try {
+						val success = rotatingFileStream.deleteAllFiles()
+						callbackContext.success(success.toString())
+					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
-                    }
-                }
-            }
+					}
+				}
+			}
+
+			ACTION_CLOSE_ACTIVE_STREAM -> {
+				cordova.threadPool.execute {
+					try {
+						rotatingFileStream.closeActiveStream()
+						callbackContext.success()
+					} catch (ex: Exception) {
+						onActionFailure(callbackContext, action, ex)
+					}
+				}
+			}
+
 			ACTION_GET_CACHE_BLOB -> {
-                cordova.threadPool.execute {
-                    try {
-                        val combinedBytes = rotatingFileStream.toBlob()
-                        if (combinedBytes != null) {
-                            callbackContext.success(combinedBytes)
-                        } else {
-                            callbackContext.error("cannot fetch cache blob after app destroy")
-                        }
-                    } catch (ex: Exception) {
+				cordova.threadPool.execute {
+					try {
+						val combinedBytes = rotatingFileStream.toBlob()
+						if (combinedBytes != null) {
+							callbackContext.success(combinedBytes)
+						} else {
+							callbackContext.error("cannot fetch cache blob after app destroy")
+						}
+					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
-                    }
-                }
-            }
+					}
+				}
+			}
+
 			ACTION_CONFIGURE -> {
-                cordova.threadPool.execute {
-                    try {
-                        val options = args.optJSONObject(0)
-                        val result = applyConfigurationFromJson(options)
-                        callbackContext.success(result)
-                    } catch (ex: Exception) {
+				cordova.threadPool.execute {
+					try {
+						val options = args.optJSONObject(0)
+						val result = applyConfigurationFromJson(options)
+						callbackContext.success(result)
+					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)
-                    }
-                }
-            }
-            else -> {
-                Timber.w("rejecting unsupported action '$action'")
-                callbackContext.error("Action $action is not implemented in SecureLoggerPlugin.")
-                return false
-            }
-        }
-        return true
-    }
+					}
+				}
+			}
+
+			else -> {
+				Timber.w("rejecting unsupported action '$action'")
+				callbackContext.error("Action $action is not implemented in SecureLoggerPlugin.")
+				return false
+			}
+		}
+		return true
+	}
 
 	private fun onActionFailure(
 		callbackContext: CallbackContext,
@@ -140,18 +161,18 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 		callbackContext.error(ex.message)
 	}
 
-    private fun captureLogEvents(events: JSONArray?) {
-        if (events == null || events.length() <= 0) {
-            return
-        }
+	private fun captureLogEvents(events: JSONArray?) {
+		if (events == null || events.length() <= 0) {
+			return
+		}
 
-        for (i in 0 until events.length()) {
-            val ev: JSONObject = events.optJSONObject(i) ?: continue
+		for (i in 0 until events.length()) {
+			val ev: JSONObject = events.optJSONObject(i) ?: continue
 			if (getWebEventLevel(ev) < timberFileProxy.minLevel) continue
-            val text = serializeWebEventFromJSON(ev)
-            rotatingFileStream.appendLine(text)
-        }
-    }
+			val text = serializeWebEventFromJSON(ev)
+			rotatingFileStream.appendLine(text)
+		}
+	}
 
 	private fun intOutOfBoundsError(key: String): JSONObject {
 		return JSONObject()
@@ -185,11 +206,11 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 		}
 	}
 
-    private fun applyConfigurationFromJson(config: JSONObject?): JSONObject {
+	private fun applyConfigurationFromJson(config: JSONObject?): JSONObject {
 
 		val result = JSONObject()
 
-        if (config == null) {
+		if (config == null) {
 			return result.put(CONFIG_RESULT_KEY_SUCCESS, true)
 		}
 
@@ -240,5 +261,5 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 		result.put(CONFIG_RESULT_KEY_ERRORS, JSONArray(errors))
 
 		return result
-    }
+	}
 }
