@@ -1,4 +1,4 @@
-import { type LogEvent, LoggerTransport } from '@obsidize/rx-console';
+import { LogEvent, LoggerTransport } from '@obsidize/rx-console';
 /**
  * Converts the given rx-console event to a native event,
  * add adds it to the SecureLogger flush queue.

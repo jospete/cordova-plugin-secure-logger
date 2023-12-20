@@ -1,4 +1,4 @@
-import { type LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport, stringifyAndJoin } from '@obsidize/rx-console';
+import { LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport, stringifyAndJoin } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
 function remapWebviewLogLevel(level: number): SecureLogLevel {

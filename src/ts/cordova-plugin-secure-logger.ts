@@ -228,6 +228,20 @@ export class SecureLoggerCordovaInterface {
     }
 
     /**
+     * Manually close the current active file stream
+     * which logs are being written to.
+     *
+     * Call this if your app is about to close and
+     * you want to prevent potential log data loss
+     *
+     * (e.g. if the app is about to be killed non-gracefully and 
+     * native on-destroy callbacks will not get called)
+     */
+    public closeActiveStream(): Promise<void> {
+        return invoke('closeActiveStream');
+    }
+
+    /**
      * Customize how this plugin should operate.
      */
     public configure(options: ConfigureOptions): Promise<ConfigureResult> {

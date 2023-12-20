@@ -111,6 +111,19 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         return invoke('getCacheBlob');
     };
     /**
+     * Manually close the current active file stream
+     * which logs are being written to.
+     *
+     * Call this if your app is about to close and
+     * you want to prevent potential log data loss
+     *
+     * (e.g. if the app is about to be killed non-gracefully and
+     * native on-destroy callbacks will not get called)
+     */
+    SecureLoggerCordovaInterface.prototype.closeActiveStream = function () {
+        return invoke('closeActiveStream');
+    };
+    /**
      * Customize how this plugin should operate.
      */
     SecureLoggerCordovaInterface.prototype.configure = function (options) {
