@@ -12,13 +12,14 @@
     "build": "run-s build:clean build:cordova build:es6",
     "docs": "typedoc ./src/ts/index.ts --out ./docs",
     "docs:open": "open ./docs/index.html",
-    "version:sync": "node ./scripts/version-sync.js",
+    "fix:ios": "node ./scripts/fix-ios-source-imports.js",
     "version": "run-s build version:sync docs",
+    "version:sync": "node ./scripts/version-sync.js",
     "version:patch": "npm version patch",
-    "version:publish": "node ./scripts/version-publish.js",
     "npm:publish": "npm publish",
-    "bump": "run-s version:patch version:publish npm:publish",
-    "fix:ios": "node ./scripts/fix-ios-source-imports.js"
+    "git:publish": "node ./scripts/version-publish.js",
+    "version:publish": "run-s git:publish npm:publish",
+    "bump": "run-s version:patch version:publish"
   },
   "repository": {
     "type": "git",
