@@ -145,8 +145,10 @@ class RotatingFileStream(
 
 	fun destroy() {
 		if (!mDestroyed) {
-			mDestroyed = true
-			closeActiveStream()
+			synchronized(mLock) {
+				mDestroyed = true
+				closeActiveStreamSync()
+			}
 		}
 	}
 
@@ -163,12 +165,11 @@ class RotatingFileStream(
 	}
 
 	@Throws(
-		java.lang.SecurityException::class,
-		RotatingFileStreamDestroyedException::class
+		java.lang.SecurityException::class
 	)
 	fun deleteAllFiles(): Boolean {
 		synchronized(mLock) {
-			assertNotDestroyed()
+			closeActiveStreamSync()
 			return output.deleteRecursively() && output.mkdirs()
 		}
 	}
@@ -176,11 +177,7 @@ class RotatingFileStream(
 	@Throws(java.io.IOException::class)
 	fun closeActiveStream() {
 		synchronized(mLock) {
-			if (mActiveStream != null) {
-				mActiveStream!!.flush()
-				mActiveStream!!.close()
-				mActiveStream = null
-			}
+			closeActiveStreamSync()
 		}
 	}
 
@@ -213,7 +210,7 @@ class RotatingFileStream(
 
 			// Data at the end of the file will be partially corrupted if
 			// the stream is not shut down, so need to close it before we can read it
-			closeActiveStream()
+			closeActiveStreamSync()
 
 			val files: Array<File> = output.listFiles() ?: arrayOf()
 			val outputStream = ByteArrayOutputStream()
@@ -248,6 +245,14 @@ class RotatingFileStream(
 	private fun assertNotDestroyed() {
 		if (mDestroyed) {
 			throw RotatingFileStreamDestroyedException()
+		}
+	}
+
+	private fun closeActiveStreamSync() {
+		if (mActiveStream != null) {
+			mActiveStream!!.flush()
+			mActiveStream!!.close()
+			mActiveStream = null
 		}
 	}
 
@@ -313,7 +318,7 @@ class RotatingFileStream(
 		java.security.GeneralSecurityException::class
 	)
 	private fun createNewStream(): FileOutputStream {
-		closeActiveStream()
+		closeActiveStreamSync()
 
 		mActiveFile = File(output.path, generateArchiveFileName())
 
@@ -337,7 +342,7 @@ class RotatingFileStream(
 			&& mActiveFile!!.exists()
 			&& mActiveFile!!.length() >= maxFileSize
 		) {
-			closeActiveStream()
+			closeActiveStreamSync()
 		}
 
 		val files: MutableList<File> = output
