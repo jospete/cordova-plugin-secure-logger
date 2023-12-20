@@ -88,11 +88,24 @@ public class SecureLoggerPlugin : CDVPlugin {
     @objc(getCacheBlob:)
     func getCacheBlob(command: CDVInvokedUrlCommand) {
         DispatchQueue.main.async(flags: .barrier) {
-            if let bytes = self.fileStream.getCacheBlob() {
+            do {
+                let bytes = try self.fileStream.getCacheBlob()
                 print("getCacheBlob() sending response with \(bytes.count) bytes")
                 self.sendOkBytes(command.callbackId, bytes)
-            } else {
-                self.sendError(command.callbackId, "Failed to load cache blob")
+            } catch {
+                self.sendError(command.callbackId, String(describing: error))
+            }
+        }
+    }
+
+    @objc(closeActiveStream:)
+    func closeActiveStream(command: CDVInvokedUrlCommand) {
+        DispatchQueue.main.async(flags: .barrier) {
+            do {
+                try self.fileStream.closeActiveStream()
+                self.sendOk(command.callbackId)
+            } catch {
+                self.sendError(command.callbackId, String(describing: error))
             }
         }
     }

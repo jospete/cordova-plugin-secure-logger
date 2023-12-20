@@ -118,10 +118,14 @@ public class SecureLoggerFileStreamOptions {
 }
 
 public class SecureLoggerFileStream {
+    public enum Error : Swift.Error {
+        case streamDestroyed
+    }
+
     private let outputDirectory: URL
     private var _options: SecureLoggerFileStreamOptions
     private let mutex = NSLock()
-    private var destroyed = false
+    private var _destroyed = false
     private var activeFilePath: URL?
     private var activeStream: CipherOutputStream?
 
@@ -142,6 +146,10 @@ public class SecureLoggerFileStream {
         return self._options.maxFileCount
     }
     
+    public var destroyed: Bool {
+        return self._destroyed
+    }
+    
     public var options: SecureLoggerFileStreamOptions {
         get {
             self.mutex.lock()
@@ -157,49 +165,54 @@ public class SecureLoggerFileStream {
     }
     
     public func destroy() {
-        self.mutex.lock()
-        self.destroyed = true
-        self.closeActiveStream()
-        self.mutex.unlock()
+        if !self.destroyed {
+            self.mutex.lock()
+            self._destroyed = true
+            self.closeActiveStreamSync()
+            self.mutex.unlock()
+        }
     }
-    
+
     public func appendLine(_ line: String) throws {
-        if !self.destroyed && !line.isEmpty {
+        if !line.isEmpty {
             try self.append(line + "\n")
         }
     }
 
     public func append(_ text: String) throws {
+        try self.assertNotDestroyed()
         self.mutex.lock()
-        if !self.destroyed && !text.isEmpty {
-            if let stream = try self.loadActiveStream() {
-                stream.writeUtf8(text)
-            }
+        if !text.isEmpty {
+            let stream = try self.loadActiveStream()
+            stream.writeUtf8(text)
         }
+        self.mutex.unlock()
+    }
+    
+    public func closeActiveStream() throws {
+        self.mutex.lock()
+        self.closeActiveStreamSync()
         self.mutex.unlock()
     }
     
     public func deleteAllCacheFiles() -> Bool {
         self.mutex.lock()
-        let result = !self.destroyed
-            && self.outputDirectory.deleteFileSystemEntry()
+        self.closeActiveStreamSync()
+        let result = self.outputDirectory.deleteFileSystemEntry()
             && self.outputDirectory.mkdirs()
         self.mutex.unlock()
         return result
     }
     
-    public func getCacheBlob() -> [UInt8]? {
+    public func getCacheBlob() throws -> [UInt8] {
         
-        if self.destroyed {
-            print("getCacheBlob() stream is destroyed!")
-            return nil;
-        }
+        try self.assertNotDestroyed()
         
         self.mutex.lock()
 
         // Data at the end of the file will be partially corrupted if
         // the stream is not shut down, so need to close it before we can read it
-        closeActiveStream()
+        self.closeActiveStreamSync()
 
         var files = outputDirectory.listFiles()
         
@@ -237,6 +250,12 @@ public class SecureLoggerFileStream {
         
         return resultBytes
     }
+    
+    private func assertNotDestroyed() throws {
+        if self.destroyed {
+            throw Error.streamDestroyed
+        }
+    }
 
     private func generateArchiveFileName() -> String {
         // Generates a unique name like "SCR-LOG-V1-1698079640670.log"
@@ -269,14 +288,14 @@ public class SecureLoggerFileStream {
         return outputStream;
     }
 
-    private func closeActiveStream() {
+    private func closeActiveStreamSync() {
         if let stream = activeStream {
             stream.close()
             activeStream = nil
         }
     }
 
-    private func loadActiveStream() throws -> OutputStreamLike? {
+    private func loadActiveStream() throws -> OutputStreamLike {
         if activeStream != nil
             && !activeStream!.hasCipherUpdateFailure
             && activeFilePath != nil
@@ -290,8 +309,8 @@ public class SecureLoggerFileStream {
         return try createNewStream()
     }
 
-    private func createNewStream() throws -> OutputStreamLike? {
-        closeActiveStream()
+    private func createNewStream() throws -> OutputStreamLike {
+        closeActiveStreamSync()
 
         let nextFileName = self.generateArchiveFileName()
         activeFilePath = outputDirectory.appendingPathComponent(nextFileName)
@@ -304,7 +323,7 @@ public class SecureLoggerFileStream {
 
         activeStream = try openWriteStream(activeFilePath!)
 
-        return activeStream
+        return activeStream!
     }
 
     private func normalizeFileCache() {
@@ -317,7 +336,7 @@ public class SecureLoggerFileStream {
         if (activeFilePath != nil
             && activeFilePath!.fileOrDirectoryExists()
             && activeFilePath!.fileLength() >= maxFileSize) {
-            closeActiveStream()
+            closeActiveStreamSync()
         }
 
         var files = outputDirectory
