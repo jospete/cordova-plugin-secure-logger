@@ -266,15 +266,10 @@ public class SecureLoggerFileStream {
         let comparisonResult = a.lastPathComponent.localizedStandardCompare(b.lastPathComponent)
         return comparisonResult == ComparisonResult.orderedAscending
     }
-    
-    private func createEncryptedFile(_ filePath: URL) throws -> AESEncryptedFile {
-        let password = try CryptoUtility.deriveStreamPassword(filePath.lastPathComponent)
-        return AESEncryptedFile(filePath, password: password)
-    }
 
     private func openReadStream(_ filePath: URL) throws -> CipherInputStream {
         let startTime = Date.nowMilliseconds
-        let encryptedFile = try createEncryptedFile(filePath)
+        let encryptedFile = try AESEncryptedFile(filePath)
         let inputStream = try encryptedFile.openInputStream()
         print("logger input stream created in \(Date.nowMilliseconds - startTime) ms")
         return inputStream;
@@ -282,7 +277,7 @@ public class SecureLoggerFileStream {
 
     private func openWriteStream(_ filePath: URL) throws -> CipherOutputStream {
         let startTime = Date.nowMilliseconds
-        let encryptedFile = try createEncryptedFile(filePath)
+        let encryptedFile = try AESEncryptedFile(filePath)
         let outputStream = try encryptedFile.openOutputStream()
         print("logger output stream created in \(Date.nowMilliseconds - startTime) ms")
         return outputStream;
