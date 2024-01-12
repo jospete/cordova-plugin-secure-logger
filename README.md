@@ -79,8 +79,8 @@ const logger = new Logger('ExampleService');
 // sent to the plugin on a fixed interval.
 logger.debug(`This will be stored in an encrypted log file`);
 
-const someError = JSON.stringify({error: `transfunctioner stopped combobulating`});
-logger.warn(tag, `Something bad happened! -> ${someError}`);
+const someError = {error: `transfunctioner stopped combobulating`};
+logger.warn(`Something bad happened! ->`, someError);
 ```
 
 #### Android:
