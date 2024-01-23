@@ -83,13 +83,19 @@ export interface ConfigureOptions {
      * If provided, will filter all logs on both webview and native
      * that are below the given level from entering the file cache.
      * For example, if this is set to DEBUG, all TRACE logs will be filtered out.
+     * 
+     * default: `SecureLogLevel.VERBOSE`
      */
     minLevel?: SecureLogLevel;
 
     /**
      * If provided, will limit the size of each chunk file to the given value in bytes.
      *
-     * Must be a positive integer
+     * If provided, must be a positive integer
+     * 
+     * min: 1000 (1KB)
+     * max: 4000000 (4MB)
+     * default: 2000000 (2MB)
      */
     maxFileSizeBytes?: number;
 
@@ -99,7 +105,11 @@ export interface ConfigureOptions {
      * this is set to 4MB, there will never be more than (approximately) 2 full chunk files
      * in storage at any given time.
      *
-     * Must be a positive integer
+     * If provided, must be a positive integer
+     * 
+     * min: 1000 (1KB)
+     * max: 64000000 (64MB)
+     * default: 8000000 (8MB)
      */
     maxTotalCacheSizeBytes?: number;
 
@@ -108,7 +118,11 @@ export interface ConfigureOptions {
      * This will override both maxFileSizeBytes and maxTotalCacheSizeBytes if there
      * are a bunch of very small files in the cache and neither of these thresholds are met.
      *
-     * Must be a positive integer
+     * If provided, must be a positive integer
+     * 
+     * min: 1
+     * max: 100
+     * default: 20
      */
     maxFileCount?: number;
 }

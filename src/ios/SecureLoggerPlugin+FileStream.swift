@@ -39,7 +39,7 @@ extension String {
 
 public class SecureLoggerFileStreamOptions {
     private var mMaxFileSizeBytes: UInt64 = 2 * 1000 * 1000 // 2MB
-    private var mMaxTotalCacheSizeBytes: UInt64 = 7 * 1000 * 1000 // 8MB
+    private var mMaxTotalCacheSizeBytes: UInt64 = 8 * 1000 * 1000 // 8MB
     private var mMaxFileCount: Int = 20
     
     public var maxFileSizeBytes: UInt64 { mMaxFileSizeBytes }
