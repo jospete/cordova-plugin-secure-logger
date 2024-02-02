@@ -130,7 +130,7 @@ In `plugin.xml`:
 </platform>
 ```
 
-In Swift / Objective-C:
+In Swift:
 
 ```swift
 import CocoaLumberjack
@@ -138,6 +138,17 @@ import CocoaLumberjack
 ...
 
 DDLogDebug("Logging stuff on native ios for the secure logger plugin! Yay native logs!")
+```
+
+In Objective-C:
+
+```swift
+#import <CocoaLumberjack/CocoaLumberjack.h>
+#define ddLogLevel DDLogLevelAll
+
+...
+
+DDLogDebug("Logging stuff on native ios for the secure logger plugin! Yay native logs!");
 ```
 
 ### Gathering Logs to Report
