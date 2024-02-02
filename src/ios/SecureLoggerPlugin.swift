@@ -19,6 +19,10 @@ public class SecureLoggerPlugin : CDVPlugin {
     public override func pluginInitialize() {
         super.pluginInitialize()
         
+        if isDebuggerAttached() {
+            DDLog.add(DDOSLogger.sharedInstance) // Use os_log
+        }
+        
         let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         var appRootCacheDirectory = cachesDirectory
         
@@ -119,6 +123,15 @@ public class SecureLoggerPlugin : CDVPlugin {
             } else {
                 self.sendError(command.callbackId, "input must be an object")
             }
+        }
+    }
+    
+    @objc(getDebugState:)
+    func getDebugState(command: CDVInvokedUrlCommand) {
+        DispatchQueue.main.async(flags: .barrier) {
+            self.sendOkJson(command.callbackId, [
+                "debugger": isDebuggerAttached()
+            ])
         }
     }
 

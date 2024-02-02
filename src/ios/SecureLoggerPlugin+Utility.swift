@@ -16,6 +16,25 @@ class LogEventUtility {
     static let iso6801Formatter = DateFormatter.iSO8601DateWithMillisec
 }
 
+func isDebuggerAttached() -> Bool {
+    // https://stackoverflow.com/a/33177600
+    // Buffer for "sysctl(...)" call's result.
+    var info = kinfo_proc()
+    // Counts buffer's size in bytes (like C/C++'s `sizeof`).
+    var size = MemoryLayout.stride(ofValue: info)
+    // Tells we want info about own process.
+    var mib : [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+    // Call the API (and assert success).
+    let junk = sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0)
+    // assert(junk == 0, "sysctl failed")
+    return if junk == 0 {
+        // Finally, checks if debugger's flag is present yet.
+        (info.kp_proc.p_flag & P_TRACED) != 0
+    } else {
+        false
+    }
+}
+
 extension DateFormatter {
 
     static var iSO8601DateWithMillisec: DateFormatter {
