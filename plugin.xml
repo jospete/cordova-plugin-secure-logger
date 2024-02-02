@@ -19,10 +19,10 @@
       <framework src="com.jakewharton.timber:timber:5.0.1" />
       <framework src="androidx.security:security-crypto:1.1.0-alpha06" />
 
-      <source-file src="src/android/com/obsidize/secure/logger/SecureLoggerUtility.kt" target-dir="java/com/obsidize/secure/logger" />
-      <source-file src="src/android/com/obsidize/secure/logger/RotatingFileStream.kt" target-dir="java/com/obsidize/secure/logger" />
-      <source-file src="src/android/com/obsidize/secure/logger/TimberFileProxy.kt" target-dir="java/com/obsidize/secure/logger" />
-      <source-file src="src/android/com/obsidize/secure/logger/SecureLoggerPlugin.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android//SecureLoggerUtility.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android//RotatingFileStream.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android//TimberFileProxy.kt" target-dir="java/com/obsidize/secure/logger" />
+      <source-file src="src/android//SecureLoggerPlugin.kt" target-dir="java/com/obsidize/secure/logger" />
    </platform>
 
    <platform name="ios">
