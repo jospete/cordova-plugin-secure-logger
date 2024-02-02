@@ -132,6 +132,19 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
             .then(unwrapConfigureResult);
     };
     /**
+     * Get info about the debugging state of the app
+     * (i.e. whether or not we're attached to a developer console).
+     */
+    SecureLoggerCordovaInterface.prototype.getDebugState = function () {
+        return invoke('getDebugState');
+    };
+    /**
+     * @returns true if we're attached to a developer console.
+     */
+    SecureLoggerCordovaInterface.prototype.isDebuggerAttached = function () {
+        return this.getDebugState().then(function (state) { return !!(state === null || state === void 0 ? void 0 : state.debugger); });
+    };
+    /**
      * Completely disables event caching on this
      * interface, and clears any buffered events.
      * **NOTE**: convenience methods that use `log()` will

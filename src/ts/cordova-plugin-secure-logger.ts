@@ -153,6 +153,15 @@ export interface ConfigureResult {
     errors?: ConfigureOptionError[];
 }
 
+/**
+ * Info the plugin has retrieved from the system
+ * about whether we are attached to a developer console
+ * of some sort.
+ */
+export interface DebugState {
+    debugger: boolean;
+}
+
 function normalizeConfigureResult(value: Partial<ConfigureResult>): ConfigureResult {
 
     if (!value) {
@@ -262,6 +271,21 @@ export class SecureLoggerCordovaInterface {
         return invoke<Partial<ConfigureResult>>('configure', options)
             .then(normalizeConfigureResult)
             .then(unwrapConfigureResult);
+    }
+
+    /**
+     * Get info about the debugging state of the app
+     * (i.e. whether or not we're attached to a developer console).
+     */
+    public getDebugState(): Promise<DebugState> {
+        return invoke<DebugState>('getDebugState');
+    }
+
+    /**
+     * @returns true if we're attached to a developer console.
+     */
+    public isDebuggerAttached(): Promise<boolean> {
+        return this.getDebugState().then((state) => !!state?.debugger);
     }
 
     /**

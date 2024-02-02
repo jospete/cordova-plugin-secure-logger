@@ -95,6 +95,14 @@ export interface ConfigureResult {
     error?: string;
     errors?: ConfigureOptionError[];
 }
+/**
+ * Info the plugin has retrieved from the system
+ * about whether we are attached to a developer console
+ * of some sort.
+ */
+export interface DebugState {
+    debugger: boolean;
+}
 export declare class SecureLoggerCordovaInterface {
     /**
      * Customizable callback to handle when event cache flush fails.
@@ -150,6 +158,15 @@ export declare class SecureLoggerCordovaInterface {
      * Customize how this plugin should operate.
      */
     configure(options: ConfigureOptions): Promise<ConfigureResult>;
+    /**
+     * Get info about the debugging state of the app
+     * (i.e. whether or not we're attached to a developer console).
+     */
+    getDebugState(): Promise<DebugState>;
+    /**
+     * @returns true if we're attached to a developer console.
+     */
+    isDebuggerAttached(): Promise<boolean>;
     /**
      * Completely disables event caching on this
      * interface, and clears any buffered events.
