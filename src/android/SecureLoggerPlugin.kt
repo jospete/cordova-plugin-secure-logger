@@ -1,6 +1,5 @@
 package com.obsidize.secure.logger
 
-import org.apache.cordova.BuildConfig
 import org.apache.cordova.CallbackContext
 import org.apache.cordova.CordovaPlugin
 import org.json.JSONArray
@@ -17,6 +16,7 @@ private const val ACTION_CLEAR_CACHE = "clearCache"
 private const val ACTION_GET_CACHE_BLOB = "getCacheBlob"
 private const val ACTION_CLOSE_ACTIVE_STREAM = "closeActiveStream"
 private const val ACTION_CONFIGURE = "configure"
+private const val ACTION_GET_DEBUG_STATE = "getDebugState"
 private const val CONFIG_RESULT_KEY_SUCCESS = "success"
 private const val CONFIG_RESULT_KEY_ERRORS = "errors"
 private const val CONFIG_ERROR_KEY_OPTION = "option"
@@ -31,7 +31,9 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	private var timberDebug: Timber.DebugTree? = null
 
 	override fun pluginInitialize() {
-		if (BuildConfig.DEBUG) {
+		super.pluginInitialize()
+
+		if (isDebuggerAttached()) {
 			timberDebug = Timber.DebugTree()
 			Timber.plant(timberDebug!!)
 		}
@@ -132,6 +134,18 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 					try {
 						val options = args.optJSONObject(0)
 						val result = applyConfigurationFromJson(options)
+						callbackContext.success(result)
+					} catch (ex: Exception) {
+						onActionFailure(callbackContext, action, ex)
+					}
+				}
+			}
+
+			ACTION_GET_DEBUG_STATE -> {
+				cordova.threadPool.execute {
+					try {
+						val result = JSONObject()
+							.put("debugger", isDebuggerAttached())
 						callbackContext.success(result)
 					} catch (ex: Exception) {
 						onActionFailure(callbackContext, action, ex)

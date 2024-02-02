@@ -1,5 +1,6 @@
 package com.obsidize.secure.logger
 
+import android.os.Debug
 import android.util.Log
 import org.json.JSONObject
 import java.io.IOException
@@ -24,6 +25,10 @@ const val MISSING_MESSAGE = "<MISSING_MESSAGE>"
 
 private val iso8601 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 private val timezoneUtc = TimeZone.getTimeZone("UTC")
+
+fun isDebuggerAttached(): Boolean {
+	return Debug.isDebuggerConnected()
+}
 
 fun timestampOf(date: Date): String {
 	iso8601.timeZone = timezoneUtc
