@@ -10,6 +10,7 @@ import java.lang.Thread.UncaughtExceptionHandler
 
 private const val LOG_DIR = "logs"
 private const val LOG_CONFIG_FILE = "logs-config.json"
+private const val ACTION_SET_DEBUG_OUTPUT_ENABLED = "setDebugOutputEnabled"
 private const val ACTION_CAPTURE = "capture"
 private const val ACTION_CAPTURE_TEXT = "captureText"
 private const val ACTION_CLEAR_CACHE = "clearCache"
@@ -22,6 +23,8 @@ private const val CONFIG_RESULT_KEY_ERRORS = "errors"
 private const val CONFIG_ERROR_KEY_OPTION = "option"
 private const val CONFIG_ERROR_KEY_ERROR = "error"
 private const val CONFIG_KEY_MIN_LEVEL = "minLevel"
+private const val KEY_DEBUGGER_ATTACHED = "debuggerAttached"
+private const val KEY_DEBUG_OUTPUT_ENABLED = "debugOutputEnabled"
 
 class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	private lateinit var rotatingFileStream: RotatingFileStream
@@ -29,14 +32,13 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	private lateinit var logsConfigFile: File
 	private var defaultExceptionHandler: UncaughtExceptionHandler? = null
 	private var timberDebug: Timber.DebugTree? = null
+	private var debugOutputEnabled: Boolean = false
 
 	override fun pluginInitialize() {
 		super.pluginInitialize()
 
-		if (isDebuggerAttached()) {
-			timberDebug = Timber.DebugTree()
-			Timber.plant(timberDebug!!)
-		}
+		// enable immediately so we don't lose startup log output
+		setDebugOutputEnabled(true)
 
 		val logDir = File(cordova.context.cacheDir.path, LOG_DIR)
 		val streamOptions = RotatingFileStreamOptions(logDir)
@@ -59,9 +61,11 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	override fun onDestroy() {
 		Timber.uproot(timberFileProxy)
 
-		if (timberDebug != null)
+		if (timberDebug != null) {
 			Timber.uproot(timberDebug!!)
+		}
 
+		debugOutputEnabled = false
 		rotatingFileStream.destroy()
 	}
 
@@ -72,6 +76,31 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	): Boolean {
 		Timber.v("execute action '$action'")
 		when (action) {
+			ACTION_GET_DEBUG_STATE -> {
+				cordova.threadPool.execute {
+					try {
+						val result = JSONObject()
+							.put(KEY_DEBUGGER_ATTACHED, isDebuggerAttached())
+							.put(KEY_DEBUG_OUTPUT_ENABLED, debugOutputEnabled)
+						callbackContext.success(result)
+					} catch (ex: Exception) {
+						onActionFailure(callbackContext, action, ex)
+					}
+				}
+			}
+
+			ACTION_SET_DEBUG_OUTPUT_ENABLED -> {
+				cordova.threadPool.execute {
+					try {
+						val enabled = args.optBoolean(0)
+						setDebugOutputEnabled(enabled)
+						callbackContext.success()
+					} catch (ex: Exception) {
+						onActionFailure(callbackContext, action, ex)
+					}
+				}
+			}
+
 			ACTION_CAPTURE -> {
 				cordova.threadPool.execute {
 					try {
@@ -141,18 +170,6 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 				}
 			}
 
-			ACTION_GET_DEBUG_STATE -> {
-				cordova.threadPool.execute {
-					try {
-						val result = JSONObject()
-							.put("debugger", isDebuggerAttached())
-						callbackContext.success(result)
-					} catch (ex: Exception) {
-						onActionFailure(callbackContext, action, ex)
-					}
-				}
-			}
-
 			else -> {
 				Timber.w("rejecting unsupported action '$action'")
 				callbackContext.error("Action $action is not implemented in SecureLoggerPlugin.")
@@ -169,6 +186,24 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	) {
 		Timber.e("failed plugin action '$action' -> ${ex.message}")
 		callbackContext.error(ex.message)
+	}
+
+	private fun setDebugOutputEnabled(enabled: Boolean) {
+		if (enabled == debugOutputEnabled) {
+			return
+		}
+
+		if (timberDebug == null) {
+			timberDebug = Timber.DebugTree()
+		}
+
+		if (enabled) {
+			Timber.plant(timberDebug!!)
+		} else {
+			Timber.uproot(timberDebug!!)
+		}
+
+		debugOutputEnabled = enabled
 	}
 
 	private fun captureLogEvents(events: JSONArray?) {

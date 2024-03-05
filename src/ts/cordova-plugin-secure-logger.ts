@@ -154,12 +154,24 @@ export interface ConfigureResult {
 }
 
 /**
- * Info the plugin has retrieved from the system
- * about whether we are attached to a developer console
- * of some sort.
+ * Flags/values regarding current debug state of the app
  */
 export interface DebugState {
-    debugger: boolean;
+
+    /**
+     * Flag indicating whether we are attached to a developer console of some sort.
+     */
+    debuggerAttached: boolean;
+
+    /**
+     * Flag indicating whether Timber/Lumberjack are currently 
+     * configured to post events to the attached debugger console.
+     * 
+     * When enabled, native logs will show in logcat/xcode.
+     * 
+     * Can be changed by calling `setDebugOutputEnabled()` on this plugin.
+     */
+    debugOutputEnabled: boolean;
 }
 
 function normalizeConfigureResult(value: Partial<ConfigureResult>): ConfigureResult {
@@ -214,6 +226,14 @@ export class SecureLoggerCordovaInterface {
 
     public set maxCachedEvents(value: number) {
         this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+    }
+
+    /**
+     * Change the output state of Timber/Lumberjack native logs.
+     * When enabled, native logs will show in logcat/xcode.
+     */
+    public setDebugOutputEnabled(enabled: boolean): Promise<void> {
+        return invoke('setDebugOutputEnabled', enabled);
     }
 
     /**
@@ -278,14 +298,7 @@ export class SecureLoggerCordovaInterface {
      * (i.e. whether or not we're attached to a developer console).
      */
     public getDebugState(): Promise<DebugState> {
-        return invoke<DebugState>('getDebugState');
-    }
-
-    /**
-     * @returns true if we're attached to a developer console.
-     */
-    public isDebuggerAttached(): Promise<boolean> {
-        return this.getDebugState().then((state) => !!state?.debugger);
+        return invoke('getDebugState');
     }
 
     /**

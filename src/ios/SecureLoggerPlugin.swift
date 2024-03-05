@@ -8,20 +8,22 @@ let CONFIG_RESULT_KEY_ERRORS = "errors"
 let CONFIG_ERROR_KEY_OPTION = "option"
 let CONFIG_ERROR_KEY_ERROR = "error"
 let CONFIG_KEY_MIN_LEVEL = "minLevel"
+let KEY_DEBUGGER_ATTACHED = "debuggerAttached"
+let KEY_DEBUG_OUTPUT_ENABLED = "debugOutputEnabled"
 
 @objc(SecureLoggerPlugin)
 public class SecureLoggerPlugin : CDVPlugin {
     private var logsConfigFile: URL!
     private var fileStream: SecureLoggerFileStream!
     private var lumberjackProxy: SecureLoggerLumberjackFileProxy!
+    private var debugOutputEnabled: Bool = false
     
     @objc(pluginInitialize)
     public override func pluginInitialize() {
         super.pluginInitialize()
         
-        if isDebuggerAttached() {
-            DDLog.add(DDOSLogger.sharedInstance) // Use os_log
-        }
+        // enable immediately so we don't lose startup log output
+        self.setDebugOutputEnabledInternal(true)
         
         let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         var appRootCacheDirectory = cachesDirectory
@@ -49,6 +51,28 @@ public class SecureLoggerPlugin : CDVPlugin {
         DDLogDebug("running teardown actions...")
         self.fileStream.destroy()
         super.onAppTerminate()
+    }
+
+    @objc(getDebugState:)
+    func getDebugState(command: CDVInvokedUrlCommand) {
+        DispatchQueue.main.async(flags: .barrier) {
+            self.sendOkJson(command.callbackId, [
+                KEY_DEBUGGER_ATTACHED: isDebuggerAttached(),
+                KEY_DEBUG_OUTPUT_ENABLED: self.debugOutputEnabled
+            ])
+        }
+    }
+    
+    @objc(setDebugOutputEnabled:)
+    func setDebugOutputEnabled(command: CDVInvokedUrlCommand) {
+        DispatchQueue.main.async(flags: .barrier) {
+            if let enabled = command.arguments[0] as? Bool {
+                self.setDebugOutputEnabledInternal(enabled)
+                self.sendOk(command.callbackId)
+            } else {
+                self.sendError(command.callbackId, "input must be an array of events")
+            }
+        }
     }
 
     @objc(capture:)
@@ -125,15 +149,6 @@ public class SecureLoggerPlugin : CDVPlugin {
             }
         }
     }
-    
-    @objc(getDebugState:)
-    func getDebugState(command: CDVInvokedUrlCommand) {
-        DispatchQueue.main.async(flags: .barrier) {
-            self.sendOkJson(command.callbackId, [
-                "debugger": isDebuggerAttached()
-            ])
-        }
-    }
 
     private func sendOk(_ callbackId: String, _ message: String? = nil) {
         let pluginResult = CDVPluginResult(status: .ok, messageAs: message)
@@ -153,6 +168,20 @@ public class SecureLoggerPlugin : CDVPlugin {
     private func sendError(_ callbackId: String, _ message: String? = nil) {
         let pluginResult = CDVPluginResult(status: .error, messageAs: message)
         self.commandDelegate.send(pluginResult, callbackId: callbackId)
+    }
+    
+    private func setDebugOutputEnabledInternal(_ enabled: Bool) {
+        if enabled == self.debugOutputEnabled {
+            return
+        }
+        
+        if enabled {
+            DDLog.add(DDOSLogger.sharedInstance) // Use os_log
+        } else {
+            DDLog.remove(DDOSLogger.sharedInstance)
+        }
+        
+        self.debugOutputEnabled = enabled
     }
 
     private func captureLogEvents(_ eventList: [[String: Any]]) {
