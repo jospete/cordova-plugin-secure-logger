@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-secure-logger",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "cordova plugin for securely writing logs to local app cache",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
