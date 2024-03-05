@@ -298,7 +298,7 @@ export class SecureLoggerCordovaInterface {
      * (i.e. whether or not we're attached to a developer console).
      */
     public getDebugState(): Promise<DebugState> {
-        return invoke('getDebugState');
+        return invoke<DebugState>('getDebugState');
     }
 
     /**

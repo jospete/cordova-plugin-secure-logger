@@ -81,6 +81,13 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         configurable: true
     });
     /**
+     * Change the output state of Timber/Lumberjack native logs.
+     * When enabled, native logs will show in logcat/xcode.
+     */
+    SecureLoggerCordovaInterface.prototype.setDebugOutputEnabled = function (enabled) {
+        return invoke('setDebugOutputEnabled', enabled);
+    };
+    /**
      * Uses native-level formatting, and automatically inserts
      * newlines between events when writing formatted content to
      * the log cache.
@@ -137,12 +144,6 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
      */
     SecureLoggerCordovaInterface.prototype.getDebugState = function () {
         return invoke('getDebugState');
-    };
-    /**
-     * @returns true if we're attached to a developer console.
-     */
-    SecureLoggerCordovaInterface.prototype.isDebuggerAttached = function () {
-        return this.getDebugState().then(function (state) { return !!(state === null || state === void 0 ? void 0 : state.debugger); });
     };
     /**
      * Completely disables event caching on this

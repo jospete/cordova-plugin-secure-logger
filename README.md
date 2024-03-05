@@ -23,7 +23,7 @@ best thing is to capture logs in a secure sandbox - which is the aim of this plu
 Github:
 
 ```bash
-npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#1.3.0
+npm i -P -E git+https://github.com/jospete/cordova-plugin-secure-logger.git#1.4.0
 ```
 
 NPM / Capacitor:

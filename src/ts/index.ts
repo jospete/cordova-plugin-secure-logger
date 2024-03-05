@@ -5,6 +5,7 @@ export {
     SecureLogEvent,
     SecureLogLevel,
     SecureLoggerCordovaInterface,
+    DebugState,
     SecureLogger
 } from './cordova-plugin-secure-logger';
 export {

@@ -96,12 +96,22 @@ export interface ConfigureResult {
     errors?: ConfigureOptionError[];
 }
 /**
- * Info the plugin has retrieved from the system
- * about whether we are attached to a developer console
- * of some sort.
+ * Flags/values regarding current debug state of the app
  */
 export interface DebugState {
-    debugger: boolean;
+    /**
+     * Flag indicating whether we are attached to a developer console of some sort.
+     */
+    debuggerAttached: boolean;
+    /**
+     * Flag indicating whether Timber/Lumberjack are currently
+     * configured to post events to the attached debugger console.
+     *
+     * When enabled, native logs will show in logcat/xcode.
+     *
+     * Can be changed by calling `setDebugOutputEnabled()` on this plugin.
+     */
+    debugOutputEnabled: boolean;
 }
 export declare class SecureLoggerCordovaInterface {
     /**
@@ -121,6 +131,11 @@ export declare class SecureLoggerCordovaInterface {
      */
     get maxCachedEvents(): number;
     set maxCachedEvents(value: number);
+    /**
+     * Change the output state of Timber/Lumberjack native logs.
+     * When enabled, native logs will show in logcat/xcode.
+     */
+    setDebugOutputEnabled(enabled: boolean): Promise<void>;
     /**
      * Uses native-level formatting, and automatically inserts
      * newlines between events when writing formatted content to
@@ -163,10 +178,6 @@ export declare class SecureLoggerCordovaInterface {
      * (i.e. whether or not we're attached to a developer console).
      */
     getDebugState(): Promise<DebugState>;
-    /**
-     * @returns true if we're attached to a developer console.
-     */
-    isDebuggerAttached(): Promise<boolean>;
     /**
      * Completely disables event caching on this
      * interface, and clears any buffered events.
