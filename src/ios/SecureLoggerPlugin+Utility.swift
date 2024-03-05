@@ -3,6 +3,15 @@ import Security
 import CocoaLumberjack
 import IDZSwiftCommonCrypto
 
+private let KEY_WEB_EVENT_LEVEL = "level"
+private let KEY_WEB_EVENT_TIMESTAMP = "timestamp"
+private let KEY_WEB_EVENT_TAG = "tag"
+private let KEY_WEB_EVENT_MESSAGE = "message"
+private let NO_TAG = "NO_TAG"
+private let NO_FUNC = "NO_FUNC"
+private let NO_MESSAGE = "<MISSING_MESSAGE>"
+private let NO_TIMESTAMP = -1
+
 public enum LogLevel : Int {
     case VERBOSE = 2
     case DEBUG = 3
@@ -105,19 +114,12 @@ extension DDLogLevel {
 extension DDLogMessage {
     
     func asSerializedNativeEvent() -> String? {
-        
         let timestamp = self.timestamp.toISOString()
         let level = self.level.toPluginLevel().toString()
-        let tag = "\(self.fileName):\(self.function ?? "NO_FUNC"):\(self.line)"
-        
+        let tag = "\(self.fileName):\(self.function ?? NO_FUNC):\(self.line)"
         return "\(timestamp) [\(level)] [\(tag)] \(message)"
     }
 }
-
-private let KEY_WEB_EVENT_LEVEL = "level"
-private let KEY_WEB_EVENT_TIMESTAMP = "timestamp"
-private let KEY_WEB_EVENT_TAG = "tag"
-private let KEY_WEB_EVENT_MESSAGE = "message"
 
 extension [String: Any] {
     
@@ -126,14 +128,16 @@ extension [String: Any] {
     }
 
     func asSerializedWebEvent() -> String {
-        
-        let timestamp = self[KEY_WEB_EVENT_TIMESTAMP] as? Int ?? Date.nowMilliseconds
+        let timestamp = self[KEY_WEB_EVENT_TIMESTAMP] as? Int ?? NO_TIMESTAMP
         let level = self.getWebEventLevel() ?? LogLevel.DEBUG.rawValue
-        let tag = self[KEY_WEB_EVENT_TAG] as? String ?? "NO_TAG"
-        let message = self[KEY_WEB_EVENT_MESSAGE] as? String ?? "<MISSING_MESSAGE>"
-        let timestampString = Date.from(epoch: timestamp).toISOString()
+        let tag = self[KEY_WEB_EVENT_TAG] as? String ?? NO_TAG
+        let message = self[KEY_WEB_EVENT_MESSAGE] as? String ?? NO_MESSAGE
+        let timestampString = if timestamp > 0 {
+            Date.from(epoch: timestamp).toISOString()
+        } else {
+            String(timestamp)
+        }
         let levelString = level.toLogLevel().toString()
-        
         return "\(timestampString) [\(levelString)] [webview-\(tag)] \(message)"
     }
 }

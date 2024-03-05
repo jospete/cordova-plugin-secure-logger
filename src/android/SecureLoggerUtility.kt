@@ -20,8 +20,9 @@ private const val PRIORITY_INFO = "INFO"
 private const val PRIORITY_WARN = "WARN"
 private const val PRIORITY_ERROR = "ERROR"
 private const val PRIORITY_ASSERT = "FATAL"
-const val NO_TAG = "NO_TAG"
-const val MISSING_MESSAGE = "<MISSING_MESSAGE>"
+private const val NO_TAG = "NO_TAG"
+private const val NO_MESSAGE = "<MISSING_MESSAGE>"
+private const val NO_TIMESTAMP = -1
 
 private val iso8601 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
 private val timezoneUtc = TimeZone.getTimeZone("UTC")
@@ -68,7 +69,7 @@ fun serializeNativeEvent(priority: Int, tag: String?, message: String, t: Throwa
 }
 
 fun serializeWebEvent(timestampMillis: Long, level: Int, tag: String, message: String): String {
-	val timestamp = timestampOf(Date(timestampMillis))
+	val timestamp = if (timestampMillis > 0) timestampOf(Date(timestampMillis)) else timestampMillis.toString()
 	return "$timestamp [${serializeLogLevel(level)}] [webview-$tag] $message"
 }
 
@@ -77,15 +78,10 @@ fun getWebEventLevel(obj: JSONObject): Int {
 }
 
 fun serializeWebEventFromJSON(obj: JSONObject): String {
-
-	var timestamp = obj.optLong("timestamp", -1)
+	val timestamp = obj.optLong("timestamp", NO_TIMESTAMP.toLong())
 	val level = getWebEventLevel(obj)
 	val tag = obj.optString("tag", NO_TAG)
-	val message = obj.optString("message", MISSING_MESSAGE)
-
-	if (timestamp < 0)
-		timestamp = currentTimeMillis()
-
+	val message = obj.optString("message", NO_MESSAGE)
 	return serializeWebEvent(timestamp, level, tag, message)
 }
 
