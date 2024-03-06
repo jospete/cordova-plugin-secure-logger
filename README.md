@@ -142,7 +142,7 @@ DDLogDebug("Logging stuff on native ios for the secure logger plugin! Yay native
 
 In Objective-C:
 
-```swift
+```objective-c
 #import <CocoaLumberjack/CocoaLumberjack.h>
 #define ddLogLevel DDLogLevelAll
 
