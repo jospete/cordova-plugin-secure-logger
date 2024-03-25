@@ -207,6 +207,11 @@ public class SecureLoggerPlugin : CDVPlugin {
     }
     
     private func tryLoadStoredConfig() {
+        if !logsConfigFile.fileOrDirectoryExists() {
+            DDLogInfo("no log config file found, using default configuration")
+            return
+        }
+        
         guard let input = logsConfigFile.readJson() else {
             DDLogWarn("failed to load stored config")
             return
