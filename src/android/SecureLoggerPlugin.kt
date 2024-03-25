@@ -227,6 +227,10 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 
 	private fun tryLoadStoredConfig() {
 		try {
+			if (!logsConfigFile.exists()) {
+				Timber.i("no log config file found, using default configuration")
+				return
+			}
 			val input = logsConfigFile.readText()
 			val json = JSONObject(input)
 			val storedOptions = rotatingFileStream.options.fromJSON(json)
