@@ -44,13 +44,14 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 		val streamOptions = RotatingFileStreamOptions(logDir)
 
 		logsConfigFile = File(cordova.context.cacheDir.path, LOG_CONFIG_FILE)
-		defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
 		rotatingFileStream = RotatingFileStream(cordova.context, streamOptions)
 		timberFileProxy = TimberFileProxy(rotatingFileStream)
 
+		defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+		Thread.setDefaultUncaughtExceptionHandler(this)
+
 		tryLoadStoredConfig()
 		Timber.plant(timberFileProxy)
-		Thread.setDefaultUncaughtExceptionHandler(this)
 	}
 
 	override fun uncaughtException(t: Thread, e: Throwable) {

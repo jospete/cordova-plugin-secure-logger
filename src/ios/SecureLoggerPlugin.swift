@@ -63,7 +63,6 @@ public class SecureLoggerPlugin : CDVPlugin {
         
         tryLoadStoredConfig()
         DDLog.add(self.lumberjackProxy!)
-        DDLogDebug("init success!")
     }
     
     @discardableResult
