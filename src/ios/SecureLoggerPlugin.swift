@@ -11,6 +11,17 @@ let CONFIG_KEY_MIN_LEVEL = "minLevel"
 let KEY_DEBUGGER_ATTACHED = "debuggerAttached"
 let KEY_DEBUG_OUTPUT_ENABLED = "debugOutputEnabled"
 
+var secureLoggerBaseExceptionHandler: (@convention(c) (NSException) -> Void)? = nil
+var secureLoggerPluginInstance: SecureLoggerPlugin? = nil
+
+func secureLoggerOverrideExceptionHandler(exception: NSException) -> Void {
+    DDLogError("Uncaught Native Error! -> " + exception.callStackSymbols.joined(separator: "\n"))
+    // close active stream immediately, so next time plugin
+    // starts up, it will have the stacktrace of the crash
+    secureLoggerPluginInstance?.closeActiveStreamNative()
+    secureLoggerBaseExceptionHandler?(exception)
+}
+
 @objc(SecureLoggerPlugin)
 public class SecureLoggerPlugin : CDVPlugin {
     private var logsConfigFile: URL!
@@ -41,9 +52,28 @@ public class SecureLoggerPlugin : CDVPlugin {
         self.fileStream = SecureLoggerFileStream(logsDirectory, options: streamOptions)
         self.lumberjackProxy = SecureLoggerLumberjackFileProxy(self.fileStream!)
         
+        if secureLoggerBaseExceptionHandler == nil {
+            secureLoggerBaseExceptionHandler = NSGetUncaughtExceptionHandler()
+        }
+        
+        if secureLoggerPluginInstance == nil {
+            secureLoggerPluginInstance = self
+            NSSetUncaughtExceptionHandler(secureLoggerOverrideExceptionHandler)
+        }
+        
         tryLoadStoredConfig()
         DDLog.add(self.lumberjackProxy!)
         DDLogDebug("init success!")
+    }
+    
+    @discardableResult
+    func closeActiveStreamNative() -> Bool {
+        do {
+            try self.fileStream.closeActiveStream()
+            return true
+        } catch {
+            return false
+        }
     }
     
     @objc(onAppTerminate)

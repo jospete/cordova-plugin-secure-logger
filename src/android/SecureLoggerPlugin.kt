@@ -54,7 +54,10 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	}
 
 	override fun uncaughtException(t: Thread, e: Throwable) {
-		Timber.e("Uncaught Native Error!", e)
+		Timber.e("Uncaught Native Error! -> " + e.stackTrace, e)
+		// close active stream immediately, so next time plugin 
+		// starts up, it will have the stacktrace of the crash
+		rotatingFileStream.closeActiveStream()
 		defaultExceptionHandler?.uncaughtException(t, e)
 	}
 
