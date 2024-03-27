@@ -47,7 +47,7 @@ fun String.isSerializedWith(version: Int): Boolean {
 data class RotatingFileStreamOptions(
 	val outputDir: File,
 	var maxFileSizeBytes: Long = 2 * 1000 * 1000, // 2MB
-	var maxTotalCacheSizeBytes: Long = 7 * 1000 * 1000, // 8MB
+	var maxTotalCacheSizeBytes: Long = 8 * 1000 * 1000, // 8MB
 	var maxFileCount: Long = 20
 )
 

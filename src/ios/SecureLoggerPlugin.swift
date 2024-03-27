@@ -100,7 +100,7 @@ public class SecureLoggerPlugin : CDVPlugin {
                 self.setDebugOutputEnabledInternal(enabled)
                 self.sendOk(command.callbackId)
             } else {
-                self.sendError(command.callbackId, "input must be an array of events")
+                self.sendError(command.callbackId, "input must be a boolean")
             }
         }
     }
@@ -238,7 +238,7 @@ public class SecureLoggerPlugin : CDVPlugin {
     
     private func tryLoadStoredConfig() {
         if !logsConfigFile.fileOrDirectoryExists() {
-            DDLogInfo("no log config file found, using default configuration")
+            DDLogVerbose("no log config file found, using default configuration")
             return
         }
         
@@ -276,9 +276,7 @@ public class SecureLoggerPlugin : CDVPlugin {
          var errors = Array<[String: Any]>()
 
          if let minLevelInt = config[CONFIG_KEY_MIN_LEVEL] as? Int {
-             print("update minLevel = \(minLevelInt)")
              lumberjackProxy.minLevelInt = minLevelInt
-             print("minLevel set to \(lumberjackProxy.minLevelInt)")
          }
 
          let streamOptions = fileStream.options
@@ -286,7 +284,6 @@ public class SecureLoggerPlugin : CDVPlugin {
 
          if let maxFileSizeBytes = config[KEY_MAX_FILE_SIZE_BYTES] as? Int {
              if streamOptions.tryUpdateMaxFileSizeBytes(maxFileSizeBytes) {
-                 print("update maxFileSizeBytes = \(maxFileSizeBytes)")
                  didUpdateOptions = true
              } else {
                  errors.append(intOutOfBoundsError(KEY_MAX_FILE_SIZE_BYTES))
@@ -295,7 +292,6 @@ public class SecureLoggerPlugin : CDVPlugin {
         
         if let maxTotalCacheSizeBytes = config[KEY_MAX_TOTAL_CACHE_SIZE_BYTES] as? Int {
             if streamOptions.tryUpdateMaxTotalCacheSizeBytes(maxTotalCacheSizeBytes) {
-                print("update maxTotalCacheSizeBytes = \(maxTotalCacheSizeBytes)")
                 didUpdateOptions = true
             } else {
                 errors.append(intOutOfBoundsError(KEY_MAX_TOTAL_CACHE_SIZE_BYTES))
@@ -304,7 +300,6 @@ public class SecureLoggerPlugin : CDVPlugin {
         
         if let maxFileCount = config[KEY_MAX_FILE_COUNT] as? Int {
             if streamOptions.tryUpdateMaxFileCount(maxFileCount) {
-                print("update maxFileCount = \(maxFileCount)")
                 didUpdateOptions = true
             } else {
                 errors.append(intOutOfBoundsError(KEY_MAX_FILE_COUNT))
@@ -315,9 +310,6 @@ public class SecureLoggerPlugin : CDVPlugin {
             fileStream.options = streamOptions
             let originDump = streamOptions.toDebugString()
             let optionsDump = fileStream.options.toDebugString()
-            print("from options: \(originDump)")
-            print("  to options: \(optionsDump)")
-            DDLogInfo("file stream reconfigured with new options: \(optionsDump)")
             trySaveCurrentConfig()
         }
         

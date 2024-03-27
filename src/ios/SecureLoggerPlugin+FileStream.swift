@@ -336,7 +336,7 @@ public class SecureLoggerFileStream {
 
         var files = outputDirectory
             .listFiles()
-            .filter { $0.fileOrDirectoryExists() && $0.isRegularFile }
+            .filter { $0.isRegularFile }
         
         if files.count <= 0 {
             return
@@ -345,16 +345,6 @@ public class SecureLoggerFileStream {
         files.sort(by: SecureLoggerFileStream.fileNameComparator)
         
         var deleteRetryCounter = 0
-        
-        func trackFileRemovalRetry(_ index: Int = 0) {
-            print("Failed to delete file at \(String(describing: files[index]))")
-            deleteRetryCounter += 1
-            if (deleteRetryCounter >= 3) {
-                print("failed to delete file after 3 attempts!")
-                files.remove(at: index)
-                deleteRetryCounter = 0
-            }
-        }
         
         // Step 1 - Purge any invalid files
         for i in (0...files.count-1).reversed() {
@@ -367,11 +357,8 @@ public class SecureLoggerFileStream {
         
         // Step 2 - Purge files until we are under the max file count threshold
         while (files.count > 0 && files.count > maxFileCount) {
-            if files[0].deleteFileSystemEntry() {
-                files.remove(at: 0)
-            } else {
-                trackFileRemovalRetry()
-            }
+            files[0].deleteFileSystemEntry()
+            files.remove(at: 0)
         }
 
         var totalFileSize: UInt64 = 0
@@ -382,14 +369,9 @@ public class SecureLoggerFileStream {
         
         // Step 3 - Purge files until we are under the max cache size threshold
         while (files.count > 0 && totalFileSize > maxCacheSize) {
-            let currentFileSize = files[0].fileLength()
-            
-            if files[0].deleteFileSystemEntry() {
-                totalFileSize -= currentFileSize
-                files.remove(at: 0)
-            } else {
-                trackFileRemovalRetry()
-            }
+            totalFileSize -= files[0].fileLength()
+            files[0].deleteFileSystemEntry()
+            files.remove(at: 0)
         }
     }
 }
