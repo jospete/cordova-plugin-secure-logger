@@ -16,7 +16,7 @@ function remapWebviewLogLevel(level: number): SecureLogLevel {
 
 function getFullWebviewEventMessage(ev: LogEvent): string {
 
-    // need to check this in case a pre-6.1.6 version is installed
+    // need to check this in case a pre-6.1.6 version of rx-console is installed
     if (typeof (ev.getMessageWithParams) === 'function') {
         return ev.getMessageWithParams();
     }
