@@ -232,7 +232,7 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 	private fun tryLoadStoredConfig() {
 		try {
 			if (!logsConfigFile.exists()) {
-				Timber.i("no log config file found, using default configuration")
+				Timber.v("no log config file found, using default configuration")
 				return
 			}
 			val input = logsConfigFile.readText()
@@ -305,8 +305,6 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 
 		if (didUpdateOptions) {
 			rotatingFileStream.options = streamOptions
-			val optionsDump = rotatingFileStream.options.toDebugString()
-			Timber.i("file stream reconfigured with new options: $optionsDump")
 			trySaveCurrentConfig()
 		}
 

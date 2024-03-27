@@ -251,9 +251,7 @@ public class SecureLoggerPlugin : CDVPlugin {
         fileStream.options = storedOptions
 
         if let minLevelInt = input[CONFIG_KEY_MIN_LEVEL] as? Int {
-            print("updating minLevel to \(minLevelInt) (from storage)")
             lumberjackProxy.minLevelInt = minLevelInt
-            print("minLevel set to \(lumberjackProxy.minLevelInt)")
         }
     }
     
@@ -308,8 +306,6 @@ public class SecureLoggerPlugin : CDVPlugin {
 
         if didUpdateOptions {
             fileStream.options = streamOptions
-            let originDump = streamOptions.toDebugString()
-            let optionsDump = fileStream.options.toDebugString()
             trySaveCurrentConfig()
         }
         
