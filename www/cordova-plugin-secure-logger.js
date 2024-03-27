@@ -211,7 +211,7 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         this.log(3 /* SecureLogLevel.DEBUG */, tag, message, timestamp);
     };
     /**
-     * Queues a new log event with the given data and level of DEBUG
+     * Queues a new log event with the given data and level of INFO
      */
     SecureLoggerCordovaInterface.prototype.info = function (tag, message, timestamp) {
         this.log(4 /* SecureLogLevel.INFO */, tag, message, timestamp);

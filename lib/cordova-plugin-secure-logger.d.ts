@@ -40,7 +40,7 @@ export interface ConfigureOptions {
     /**
      * If provided, will limit the size of each chunk file to the given value in bytes.
      *
-     * If provided, must be a positive integer
+     * must be a positive integer
      *
      * min: 1000 (1KB)
      * max: 4000000 (4MB)
@@ -53,7 +53,7 @@ export interface ConfigureOptions {
      * this is set to 4MB, there will never be more than (approximately) 2 full chunk files
      * in storage at any given time.
      *
-     * If provided, must be a positive integer
+     * must be a positive integer
      *
      * min: 1000 (1KB)
      * max: 64000000 (64MB)
@@ -65,7 +65,7 @@ export interface ConfigureOptions {
      * This will override both maxFileSizeBytes and maxTotalCacheSizeBytes if there
      * are a bunch of very small files in the cache and neither of these thresholds are met.
      *
-     * If provided, must be a positive integer
+     * must be a positive integer
      *
      * min: 1
      * max: 100
@@ -218,7 +218,7 @@ export declare class SecureLoggerCordovaInterface {
      */
     debug(tag: string, message: string, timestamp?: number): void;
     /**
-     * Queues a new log event with the given data and level of DEBUG
+     * Queues a new log event with the given data and level of INFO
      */
     info(tag: string, message: string, timestamp?: number): void;
     /**
