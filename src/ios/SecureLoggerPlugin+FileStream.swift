@@ -236,7 +236,7 @@ public class SecureLoggerFileStream {
             } catch {
                 openedReadStream = nil
                 let errorMessage = "\n\n[[FILE DECRYPT FAILURE - " +
-                    "${file.name} (${file.length()} bytes)]]" +
+                "\(file.lastPathComponent) (\(file.fileLength()) bytes)]]" +
                     "\n<<<<<<<<<<<<<<<<\n\(error)\n>>>>>>>>>>>>>>>>\n\n"
                 print("getCacheBlob() ERROR: \(errorMessage)")
                 accumulator += errorMessage

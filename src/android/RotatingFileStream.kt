@@ -228,9 +228,8 @@ class RotatingFileStream(
 					readStream.pipeTo(outputStream)
 				} catch (ex: Exception) {
 					val errorMessage = "\n\n[[FILE DECRYPT FAILURE - " +
-						"${file.name} (${file.length()} bytes)]]\n<<<<<<<<<<<<<<<<\n" +
-						ex.message +
-						"\n>>>>>>>>>>>>>>>>\n\n"
+						"${file.name} (${file.length()} bytes)]]" +
+						"\n<<<<<<<<<<<<<<<<\n${ex.message}\n>>>>>>>>>>>>>>>>\n\n"
 					outputStream.write(errorMessage.toByteArray())
 				} finally {
 					readStream?.close()
