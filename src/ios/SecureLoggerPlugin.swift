@@ -15,7 +15,8 @@ var secureLoggerBaseExceptionHandler: (@convention(c) (NSException) -> Void)? = 
 var secureLoggerPluginInstance: SecureLoggerPlugin? = nil
 
 func secureLoggerOverrideExceptionHandler(exception: NSException) -> Void {
-    DDLogError("Uncaught Native Error! -> " + exception.callStackSymbols.joined(separator: "\n"))
+    let prettyStackTrace = exception.callStackSymbols.joined(separator: "\n")
+    DDLogError("Uncaught Native Error! -> \(prettyStackTrace)")
     // close active stream immediately, so next time plugin
     // starts up, it will have the stacktrace of the crash
     secureLoggerPluginInstance?.closeActiveStreamNative()
