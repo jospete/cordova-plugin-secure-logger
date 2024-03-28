@@ -170,6 +170,11 @@ export declare class SecureLoggerCordovaInterface {
      */
     closeActiveStream(): Promise<void>;
     /**
+     * Convenience for flushing any queued events
+     * before actually closing the current stream.
+     */
+    flushAndCloseActiveStream(): Promise<void>;
+    /**
      * Customize how this plugin should operate.
      */
     configure(options: ConfigureOptions): Promise<ConfigureResult>;
@@ -178,6 +183,11 @@ export declare class SecureLoggerCordovaInterface {
      * (i.e. whether or not we're attached to a developer console).
      */
     getDebugState(): Promise<DebugState>;
+    /**
+     * Manually flush the current set of cached events.
+     * Useful for more pragmatic teardown sequencing.
+     */
+    flushEventCache(): Promise<void>;
     /**
      * Completely disables event caching on this
      * interface, and clears any buffered events.

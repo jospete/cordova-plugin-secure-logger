@@ -131,6 +131,15 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         return invoke('closeActiveStream');
     };
     /**
+     * Convenience for flushing any queued events
+     * before actually closing the current stream.
+     */
+    SecureLoggerCordovaInterface.prototype.flushAndCloseActiveStream = function () {
+        var _this = this;
+        var close = function () { return _this.closeActiveStream(); };
+        return this.flushEventCache().then(close, close);
+    };
+    /**
      * Customize how this plugin should operate.
      */
     SecureLoggerCordovaInterface.prototype.configure = function (options) {
@@ -144,6 +153,18 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
      */
     SecureLoggerCordovaInterface.prototype.getDebugState = function () {
         return invoke('getDebugState');
+    };
+    /**
+     * Manually flush the current set of cached events.
+     * Useful for more pragmatic teardown sequencing.
+     */
+    SecureLoggerCordovaInterface.prototype.flushEventCache = function () {
+        if (this.mEventCache.length <= 0) {
+            return Promise.resolve();
+        }
+        return this.capture(this.mEventCache)
+            .then(this.flushEventCacheSuccessProxy)
+            .catch(this.eventFlushErrorCallback);
     };
     /**
      * Completely disables event caching on this
@@ -244,12 +265,7 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         this.mEventCache = [];
     };
     SecureLoggerCordovaInterface.prototype.onFlushEventCache = function () {
-        if (this.mEventCache.length <= 0) {
-            return;
-        }
-        this.capture(this.mEventCache)
-            .then(this.flushEventCacheSuccessProxy)
-            .catch(this.eventFlushErrorCallback);
+        this.flushEventCache().catch(noop);
     };
     return SecureLoggerCordovaInterface;
 }());
