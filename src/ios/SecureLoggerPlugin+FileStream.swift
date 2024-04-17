@@ -40,7 +40,7 @@ extension String {
 public class SecureLoggerFileStreamOptions {
     private var mMaxFileSizeBytes: UInt64 = 2 * 1000 * 1000 // 2MB
     private var mMaxTotalCacheSizeBytes: UInt64 = 8 * 1000 * 1000 // 8MB
-    private var mMaxFileCount: Int = 20
+    private var mMaxFileCount: Int = 40
     
     public var maxFileSizeBytes: UInt64 { mMaxFileSizeBytes }
     public var maxTotalCacheSizeBytes: UInt64 { mMaxTotalCacheSizeBytes }
@@ -228,6 +228,7 @@ public class SecureLoggerFileStream {
 
         for file in files {
             do {
+                print("appending file \(file.lastPathComponent)")
                 openedReadStream = try openReadStream(file)
                 let text = openedReadStream!.readAllText()
                 print("read \(text.count) bytes")
@@ -258,8 +259,9 @@ public class SecureLoggerFileStream {
     }
 
     private func generateArchiveFileName() -> String {
-        // Generates a unique name like "SCR-LOG-V1-1698079640670.log"
-        return "\(LOG_FILE_NAME_PREFIX)\(RFS_SERIALIZER_VERSION)-\(Date.nowMilliseconds)\(LOG_FILE_NAME_EXTENSION)"
+        // Generates a unique name like "SCR-LOG-V1-UTC_2024_04_17_20_12_39_094.log"
+        let timestamp = Date().toISOFileExtString()
+        return "\(LOG_FILE_NAME_PREFIX)\(RFS_SERIALIZER_VERSION)-\(timestamp)\(LOG_FILE_NAME_EXTENSION)"
     }
     
     private static func fileNameComparator(a: URL, b: URL) -> Bool {

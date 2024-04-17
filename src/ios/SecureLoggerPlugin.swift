@@ -1,20 +1,21 @@
 import Foundation
 import CocoaLumberjack
 
-let LOG_DIR = "logs"
-let LOG_CONFIG_FILE = "logs-config.json"
-let CONFIG_RESULT_KEY_SUCCESS = "success"
-let CONFIG_RESULT_KEY_ERRORS = "errors"
-let CONFIG_ERROR_KEY_OPTION = "option"
-let CONFIG_ERROR_KEY_ERROR = "error"
-let CONFIG_KEY_MIN_LEVEL = "minLevel"
-let KEY_DEBUGGER_ATTACHED = "debuggerAttached"
-let KEY_DEBUG_OUTPUT_ENABLED = "debugOutputEnabled"
+private let LOG_DIR = "logs"
+private let LOG_CONFIG_FILE = "logs-config.json"
+private let CONFIG_RESULT_KEY_SUCCESS = "success"
+private let CONFIG_RESULT_KEY_ERRORS = "errors"
+private let CONFIG_ERROR_KEY_OPTION = "option"
+private let CONFIG_ERROR_KEY_ERROR = "error"
+private let CONFIG_KEY_MIN_LEVEL = "minLevel"
+private let KEY_DEBUGGER_ATTACHED = "debuggerAttached"
+private let KEY_DEBUG_OUTPUT_ENABLED = "debugOutputEnabled"
+private let MIN_CYCLE_WAIT_MS = 30 * 1000; // 30 seconds
 
-var secureLoggerBaseExceptionHandler: (@convention(c) (NSException) -> Void)? = nil
-var secureLoggerPluginInstance: SecureLoggerPlugin? = nil
+private var secureLoggerBaseExceptionHandler: (@convention(c) (NSException) -> Void)? = nil
+private var secureLoggerPluginInstance: SecureLoggerPlugin? = nil
 
-func secureLoggerOverrideExceptionHandler(exception: NSException) -> Void {
+private func secureLoggerOverrideExceptionHandler(exception: NSException) -> Void {
     let prettyStackTrace = exception.callStackSymbols.joined(separator: "\n")
     DDLogError("Uncaught Native Error! -> \(prettyStackTrace)")
     // close active stream immediately, so next time plugin
@@ -29,10 +30,15 @@ public class SecureLoggerPlugin : CDVPlugin {
     private var fileStream: SecureLoggerFileStream!
     private var lumberjackProxy: SecureLoggerLumberjackFileProxy!
     private var debugOutputEnabled: Bool = false
+    private var upTimeStart: Int = Date.nowMilliseconds
     
     @objc(pluginInitialize)
     public override func pluginInitialize() {
         super.pluginInitialize()
+        
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(onPause), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        nc.addObserver(self, selector: #selector(onResume), name: UIApplication.willEnterForegroundNotification, object: nil)
         
         // enable immediately so we don't lose startup log output
         self.setDebugOutputEnabledInternal(true)
@@ -81,6 +87,18 @@ public class SecureLoggerPlugin : CDVPlugin {
         DDLogDebug("running teardown actions...")
         self.fileStream.destroy()
         super.onAppTerminate()
+    }
+    
+    @objc(onPause)
+    func onPause() {
+        if (Date.nowMilliseconds - upTimeStart) >= MIN_CYCLE_WAIT_MS {
+            self.closeActiveStreamNative()
+        }
+    }
+    
+    @objc(onResume)
+    func onResume() {
+        upTimeStart = Date.nowMilliseconds
     }
 
     @objc(getDebugState:)

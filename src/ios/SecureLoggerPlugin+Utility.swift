@@ -23,6 +23,7 @@ public enum LogLevel : Int {
 
 class LogEventUtility {
     static let iso6801Formatter = DateFormatter.iSO8601DateWithMillisec
+    static let iso6801FileExtFormatter = DateFormatter.iSO8601DateFileExtWithMillisec
 }
 
 func isDebuggerAttached() -> Bool {
@@ -52,11 +53,18 @@ extension DateFormatter {
         dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
         return dateFormatter
     }
+    
+    static var iSO8601DateFileExtWithMillisec: DateFormatter {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "'UTC'_yyyy_MM_dd_HH_mm_ss_SSS"
+        dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        return dateFormatter
+    }
 }
 
 extension Date {
     
-    static var nowMilliseconds : Int {
+    static var nowMilliseconds: Int {
         return Int(Date().timeIntervalSince1970 * 1000.0)
     }
     
@@ -66,6 +74,10 @@ extension Date {
     
     func toISOString() -> String {
         return LogEventUtility.iso6801Formatter.string(from: self)
+    }
+    
+    func toISOFileExtString() -> String {
+        return LogEventUtility.iso6801FileExtFormatter.string(from: self)
     }
 }
 
@@ -94,6 +106,11 @@ extension LogLevel {
         case .FATAL:    return "FATAL"
         }
     }
+    
+    func toEventPart() -> String {
+        return "[\(self.toString())]"
+            .padding(toLength: 10, withPad: " ", startingAt: 0)
+    }
 }
 
 extension DDLogLevel {
@@ -115,9 +132,9 @@ extension DDLogMessage {
     
     func asSerializedNativeEvent() -> String? {
         let timestamp = self.timestamp.toISOString()
-        let level = self.level.toPluginLevel().toString()
+        let levelPart = self.level.toPluginLevel().toEventPart()
         let tag = "\(self.fileName):\(self.function ?? NO_FUNC):\(self.line)"
-        return "\(timestamp) [\(level)] [\(tag)] \(message)"
+        return "\(timestamp) \(levelPart) [\(tag)] \(message)"
     }
 }
 
@@ -137,8 +154,8 @@ extension [String: Any] {
         } else {
             String(timestamp)
         }
-        let levelString = level.toLogLevel().toString()
-        return "\(timestampString) [\(levelString)] [webview-\(tag)] \(message)"
+        let levelPart = level.toLogLevel().toEventPart()
+        return "\(timestampString) \(levelPart) [webview-\(tag)] \(message)"
     }
 }
 
