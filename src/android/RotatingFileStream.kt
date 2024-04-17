@@ -16,6 +16,7 @@ const val KEY_MAX_FILE_COUNT = "maxFileCount"
 private const val LOG_FILE_NAME_PREFIX = "SCR-LOG-V"
 private const val LOG_FILE_NAME_EXTENSION = ".log"
 private const val RFS_SERIALIZER_VERSION = 1
+private const val MIN_VALID_FILE_SIZE = 42 // bytes
 
 // strips out the version from an existing file name so
 // we can check if the file is stale and should be deleted
@@ -350,9 +351,11 @@ class RotatingFileStream(
 
 		// Step 1 - Purge any invalid files
 		for (i in files.count() - 1 downTo 0) {
-			val valid = files[i].name.isSerializedWith(RFS_SERIALIZER_VERSION)
+			val file = files[i]
+			val valid = file.name.isSerializedWith(RFS_SERIALIZER_VERSION)
+				&& file.length() >= MIN_VALID_FILE_SIZE
 			if (!valid) {
-				files[i].delete()
+				file.delete()
 				files.removeAt(i)
 			}
 		}

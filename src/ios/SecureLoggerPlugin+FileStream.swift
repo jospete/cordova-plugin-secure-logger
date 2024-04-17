@@ -8,6 +8,7 @@ public let KEY_MAX_FILE_COUNT = "maxFileCount"
 private let LOG_FILE_NAME_PREFIX = "SCR-LOG-V"
 private let LOG_FILE_NAME_EXTENSION = ".log"
 private let RFS_SERIALIZER_VERSION = 1
+private let MIN_VALID_FILE_SIZE = 42 // bytes
 
 extension String {
     
@@ -346,13 +347,13 @@ public class SecureLoggerFileStream {
 
         files.sort(by: SecureLoggerFileStream.fileNameComparator)
         
-        var deleteRetryCounter = 0
-        
         // Step 1 - Purge any invalid files
         for i in (0...files.count-1).reversed() {
-            let valid = files[i].lastPathComponent.isSerializedWith(RFS_SERIALIZER_VERSION)
-            if valid == false {
-                files[i].deleteFileSystemEntry()
+            let file = files[i]
+            let valid = file.lastPathComponent.isSerializedWith(RFS_SERIALIZER_VERSION)
+                && file.fileLength() >= MIN_VALID_FILE_SIZE
+            if !valid {
+                file.deleteFileSystemEntry()
                 files.remove(at: i)
             }
         }
