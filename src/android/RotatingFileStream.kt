@@ -48,7 +48,7 @@ data class RotatingFileStreamOptions(
 	val outputDir: File,
 	var maxFileSizeBytes: Long = 2 * 1000 * 1000, // 2MB
 	var maxTotalCacheSizeBytes: Long = 8 * 1000 * 1000, // 8MB
-	var maxFileCount: Long = 20
+	var maxFileCount: Long = 40
 )
 
 fun RotatingFileStreamOptions.tryUpdateMaxFileSizeBytes(value: Int): Boolean {
