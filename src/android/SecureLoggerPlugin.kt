@@ -1,5 +1,6 @@
 package com.obsidize.secure.logger
 
+import android.os.Build
 import org.apache.cordova.CallbackContext
 import org.apache.cordova.CordovaPlugin
 import org.json.JSONArray
@@ -56,13 +57,29 @@ class SecureLoggerPlugin : CordovaPlugin(), UncaughtExceptionHandler {
 
 	override fun uncaughtException(t: Thread, e: Throwable) {
 		Timber.e("Uncaught Native Error! -> ${e.stackTrace}", e)
-		// close active stream immediately, so next time plugin 
+		// close active stream immediately, so next time plugin
 		// starts up, it will have the stacktrace of the crash
 		rotatingFileStream.closeActiveStream()
 		defaultExceptionHandler?.uncaughtException(t, e)
 	}
 
+	override fun onPause(multitasking: Boolean) {
+		super.onPause(multitasking)
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+			// onStop() is not guaranteed pre-v11, so seal off the active stream on pause.
+			// NOTE: this may generate a large amount of "smaller" files if the app
+			// comes in and out of the background frequently.
+			rotatingFileStream.closeActiveStream()
+		}
+	}
+
+	override fun onStop() {
+		super.onStop()
+		rotatingFileStream.closeActiveStream()
+	}
+
 	override fun onDestroy() {
+		super.onDestroy()
 		Timber.uproot(timberFileProxy)
 
 		if (timberDebug != null) {

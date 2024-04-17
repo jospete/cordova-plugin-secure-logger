@@ -25,6 +25,7 @@ private const val NO_MESSAGE = "<MISSING_MESSAGE>"
 private const val NO_TIMESTAMP = -1
 
 private val iso8601 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+private val iso8601FileExt = SimpleDateFormat("'UTC'_yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
 private val timezoneUtc = TimeZone.getTimeZone("UTC")
 
 fun isDebuggerAttached(): Boolean {
@@ -36,8 +37,13 @@ fun timestampOf(date: Date): String {
 	return iso8601.format(date)
 }
 
-fun currentTimeMillis(): Long {
-	return Date().time
+fun getFileExtensionTimestampFrom(date: Date): String {
+	iso8601FileExt.timeZone = timezoneUtc
+	return iso8601FileExt.format(date)
+}
+
+fun getCurrentTimeStampFileExt(): String {
+	return getFileExtensionTimestampFrom(Date())
 }
 
 fun clampInt(value: Int, min: Int, max: Int): Int {
@@ -62,15 +68,19 @@ fun serializeLogLevel(priority: Int): String {
 	}
 }
 
+private fun getLogLevelPart(priority: Int): String {
+	return "[${serializeLogLevel(priority)}]".padEnd(10, ' ')
+}
+
 fun serializeNativeEvent(priority: Int, tag: String?, message: String, t: Throwable?): String {
 	val timestamp = timestampOf(Date())
 	val throwDump = if (t != null) " :: ${t.stackTrace}" else ""
-	return "$timestamp [${serializeLogLevel(priority)}] [${tag ?: NO_TAG}] $message$throwDump"
+	return "$timestamp ${getLogLevelPart(priority)} [${tag ?: NO_TAG}] $message$throwDump"
 }
 
 fun serializeWebEvent(timestampMillis: Long, level: Int, tag: String, message: String): String {
 	val timestamp = if (timestampMillis > 0) timestampOf(Date(timestampMillis)) else timestampMillis.toString()
-	return "$timestamp [${serializeLogLevel(level)}] [webview-$tag] $message"
+	return "$timestamp ${getLogLevelPart(level)} [webview-$tag] $message"
 }
 
 fun getWebEventLevel(obj: JSONObject): Int {

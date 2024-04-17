@@ -89,18 +89,9 @@ fun RotatingFileStreamOptions.toJSON(): JSONObject {
 		.put(KEY_MAX_FILE_COUNT, maxFileCount)
 }
 
-fun RotatingFileStreamOptions.toDebugString(): String {
-	return "{ " +
-		"maxFileSizeBytes = $maxFileSizeBytes" +
-		", maxTotalCacheSizeBytes = $maxTotalCacheSizeBytes" +
-		", maxFileCount = $maxFileCount" +
-		" }"
-}
-
 class RotatingFileStreamDestroyedException(
 	message: String = "RotatingFileStream is destroyed"
-) : Exception(message) {
-}
+) : Exception(message)
 
 class RotatingFileStream(
 	private val mContext: Context,
@@ -224,6 +215,7 @@ class RotatingFileStream(
 
 			for (file in files) {
 				try {
+					println("appending log file ${file.name}")
 					readStream = openReadStream(file)
 					readStream.pipeTo(outputStream)
 				} catch (ex: Exception) {
@@ -256,11 +248,11 @@ class RotatingFileStream(
 	}
 
 	private fun generateArchiveFileName(): String {
-		// Generates a unique name like "SCR-LOG-V1-1698079640670.log"
+		// Generates a unique name like "SCR-LOG-V1-UTC_2024_04_17_20_12_39_094.log"
 		return LOG_FILE_NAME_PREFIX +
 			RFS_SERIALIZER_VERSION +
 			"-" +
-			currentTimeMillis() +
+			getCurrentTimeStampFileExt() +
 			LOG_FILE_NAME_EXTENSION
 	}
 
