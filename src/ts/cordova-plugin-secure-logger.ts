@@ -122,7 +122,7 @@ export interface ConfigureOptions {
      * 
      * min: 1
      * max: 100
-     * default: 20
+     * default: 40
      */
     maxFileCount?: number;
 }

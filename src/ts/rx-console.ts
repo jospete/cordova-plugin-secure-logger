@@ -1,6 +1,27 @@
 import { LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport, stringifyAndJoin } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
+const PAUSE_EVENT = 'pause';
+let didAddFlushHook = false;
+
+function flushAndClose() {
+    SecureLogger.flushAndCloseActiveStream().catch(() => {});
+}
+
+function addFlushAndClosePauseHook(): void {
+    if (!didAddFlushHook) {
+        document.addEventListener(PAUSE_EVENT, flushAndClose);
+        didAddFlushHook = true;
+    }
+}
+
+function removeFlushAndClosePauseHook(): void {
+    if (didAddFlushHook) {
+        document.removeEventListener(PAUSE_EVENT, flushAndClose);
+        didAddFlushHook = false;
+    }
+}
+
 function remapWebviewLogLevel(level: number): SecureLogLevel {
     switch (level) {
         case LogLevel.VERBOSE:  return SecureLogLevel.VERBOSE;
@@ -23,6 +44,20 @@ function getFullWebviewEventMessage(ev: LogEvent): string {
 
     return ev.message + stringifyAndJoin(ev.params);
 }
+
+/**
+ * Extra configuration options for enabling webview logs.
+ */
+export interface WebViewEventListenerEnableOptions {
+    flushOnPause?: boolean;
+}
+
+/**
+ * Defaults for webview logging enablement.
+ */
+export const defaultOptions: WebViewEventListenerEnableOptions = {
+    flushOnPause: true
+};
 
 /**
  * Converts the given rx-console event to a native event,
@@ -48,9 +83,11 @@ export function sendRxConsoleEventToNative(ev: LogEvent): void {
  * is initialized.
  */
 export function enableWebviewListener(
-    transport: LoggerTransport = getPrimaryLoggerTransport()
+    transport: LoggerTransport = getPrimaryLoggerTransport(),
+    options: WebViewEventListenerEnableOptions = defaultOptions
 ): void {
     transport.addListener(sendRxConsoleEventToNative);
+    if (options?.flushOnPause) addFlushAndClosePauseHook();
 }
 
 /**
@@ -62,6 +99,7 @@ export function disableWebviewListener(
     transport: LoggerTransport = getPrimaryLoggerTransport()
 ): void {
     transport.removeListener(sendRxConsoleEventToNative);
+    removeFlushAndClosePauseHook();
 }
 
 /**
