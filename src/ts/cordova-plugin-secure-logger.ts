@@ -41,6 +41,8 @@ function invoke<T>(method: string, ...args: any[]): Promise<T> {
     return cordovaExecPromise<T>(PLUGIN_NAME, method, args);
 }
 
+export type EventFlushErrorCallback = (error: any, events: SecureLogEvent[]) => void;
+
 /**
  * Values to indicate the level of an event.
  * mirrors levels found in android.util.Log to minimize plugin friction.
@@ -200,14 +202,13 @@ export class SecureLoggerCordovaInterface {
     /**
      * Customizable callback to handle when event cache flush fails.
      */
-    public eventFlushErrorCallback: (error: any) => void = noop;
+    public eventFlushErrorCallback: EventFlushErrorCallback | null = null;
 
     private readonly flushEventCacheProxy: () => void = this.onFlushEventCache.bind(this);
-    private readonly flushEventCacheSuccessProxy: () => void = this.onFlushEventCacheSuccess.bind(this);
-
     private mEventCache: SecureLogEvent[] = [];
     private mCacheFlushInterval: any = null;
     private mMaxCachedEvents: number = 1000;
+    private mCachingEnabled: boolean = false;
 
     constructor() {
         // start caching events immediately so we don't
@@ -226,6 +227,82 @@ export class SecureLoggerCordovaInterface {
 
     public set maxCachedEvents(value: number) {
         this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+    }
+
+    /**
+     * Current state of caching / event flush interval.
+     * Use `setEventCacheFlushInterval()` and `disableEventCaching()`
+     * to enable and disable (respectively) caching and flush interval usage.
+     */
+    public get cachingEnabled(): boolean {
+        return this.mCachingEnabled;
+    }
+
+    /**
+     * Queues a new log event with the given data and level of VERBOSE
+     */
+    public verbose(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.VERBOSE, tag, message, timestamp);
+    }
+
+    /**
+     * Queues a new log event with the given data and level of DEBUG
+     */
+    public debug(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.DEBUG, tag, message, timestamp);
+    }
+
+    /**
+     * Queues a new log event with the given data and level of INFO
+     */
+    public info(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.INFO, tag, message, timestamp);
+    }
+
+    /**
+     * Queues a new log event with the given data and level of WARN
+     */
+    public warn(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.WARN, tag, message, timestamp);
+    }
+
+    /**
+     * Queues a new log event with the given data and level of ERROR
+     */
+    public error(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.ERROR, tag, message, timestamp);
+    }
+
+    /**
+     * Queues a new log event with the given data and level of FATAL
+     */
+    public fatal(tag: string, message: string, timestamp?: number): void {
+        this.log(SecureLogLevel.FATAL, tag, message, timestamp);
+    }
+
+    /**
+     * Alias of `verbose()`
+     */
+    public trace(tag: string, message: string, timestamp?: number): void {
+        this.verbose(tag, message, timestamp);
+    }
+
+    /**
+     * Generates a log event that will be cached for the next
+     * event flush cycle, where all cached events will be handed to the plugin.
+     * If this would cause the cache to become larger than `maxCachedEvents`,
+     * the oldest item from the cache is removed after this new event is added.
+     */
+    public log(level: SecureLogLevel, tag: string, message: string, timestamp: number = Date.now()): void {
+        this.queueEvent({level, tag, message, timestamp});
+    }
+
+    /**
+     * Get info about the debugging state of the app
+     * (i.e. whether or not we're attached to a developer console).
+     */
+    public getDebugState(): Promise<DebugState> {
+        return invoke<DebugState>('getDebugState');
     }
 
     /**
@@ -303,27 +380,6 @@ export class SecureLoggerCordovaInterface {
     }
 
     /**
-     * Get info about the debugging state of the app
-     * (i.e. whether or not we're attached to a developer console).
-     */
-    public getDebugState(): Promise<DebugState> {
-        return invoke<DebugState>('getDebugState');
-    }
-
-    /**
-     * Manually flush the current set of cached events.
-     * Useful for more pragmatic teardown sequencing.
-     */
-    public flushEventCache(): Promise<void> {
-        if (this.mEventCache.length <= 0) {
-            return Promise.resolve();
-        }
-        return this.capture(this.mEventCache)
-            .then(this.flushEventCacheSuccessProxy)
-            .catch(this.eventFlushErrorCallback);
-    }
-
-    /**
      * Completely disables event caching on this 
      * interface, and clears any buffered events.
      * **NOTE**: convenience methods that use `log()` will 
@@ -331,19 +387,8 @@ export class SecureLoggerCordovaInterface {
      */
     public disableEventCaching(): void {
         this.clearEventCacheFlushInterval();
+        this.mCachingEnabled = false;
         this.mEventCache = [];
-    }
-
-    /**
-     * Stops the internal flush interval.
-     * **NOTE**: convenience methods that use `log()` will 
-     * do nothing until the flush interval is turned back on.
-     */
-    public clearEventCacheFlushInterval(): void {
-        if (this.mCacheFlushInterval) {
-            clearInterval(this.mCacheFlushInterval);
-        }
-        this.mCacheFlushInterval = null;
     }
 
     /**
@@ -357,6 +402,7 @@ export class SecureLoggerCordovaInterface {
             this.flushEventCacheProxy, 
             intervalMs
         );
+        this.mCachingEnabled = true;
         // flush immediately when this is updated
         this.onFlushEventCache();
     }
@@ -373,70 +419,40 @@ export class SecureLoggerCordovaInterface {
     }
 
     /**
-     * Generates a log event that will be cached for the next
-     * event flush cycle, where all cached events will be handed to the plugin.
-     * If this would cause the cache to become larger than `maxCachedEvents`,
-     * the oldest item from the cache is removed after this new event is added.
+     * Manually flush the current set of cached events.
+     * Useful for more pragmatic teardown sequencing.
      */
-    public log(level: SecureLogLevel, tag: string, message: string, timestamp: number = Date.now()): void {
-        this.queueEvent({level, tag, message, timestamp});
-    }
-
-    /**
-     * Queues a new log event with the given data and level of VERBOSE
-     */
-    public verbose(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.VERBOSE, tag, message, timestamp);
-    }
-
-    /**
-     * Queues a new log event with the given data and level of DEBUG
-     */
-    public debug(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.DEBUG, tag, message, timestamp);
-    }
-
-    /**
-     * Queues a new log event with the given data and level of INFO
-     */
-    public info(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.INFO, tag, message, timestamp);
-    }
-
-    /**
-     * Queues a new log event with the given data and level of WARN
-     */
-    public warn(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.WARN, tag, message, timestamp);
-    }
-
-    /**
-     * Queues a new log event with the given data and level of ERROR
-     */
-    public error(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.ERROR, tag, message, timestamp);
-    }
-
-    /**
-     * Queues a new log event with the given data and level of FATAL
-     */
-    public fatal(tag: string, message: string, timestamp?: number): void {
-        this.log(SecureLogLevel.FATAL, tag, message, timestamp);
-    }
-
-    /**
-     * Alias of `verbose()`
-     */
-    public trace(tag: string, message: string, timestamp?: number): void {
-        this.verbose(tag, message, timestamp);
-    }
-
-    private onFlushEventCacheSuccess(): void {
+    public flushEventCache(): Promise<void> {
+        if (this.mEventCache.length <= 0) {
+            return Promise.resolve();
+        }
+        
+        // Isolate current cache from any asynchronous incoming logs.
+        // Avoids scenarios where logs would get duplicated due to
+        // `capture()` delays - i.e., cache array would not get cleared until `capture()`
+        // resolves, at which point more logs may have gotten stacked onto
+        // the cache array.
+        const capturedEvents = this.mEventCache;
         this.mEventCache = [];
+
+        return this.capture(capturedEvents).catch((err: any) => {
+            if (typeof this.eventFlushErrorCallback === 'function') {
+                this.eventFlushErrorCallback(err, capturedEvents);
+            } else {
+                this.error(PLUGIN_NAME, `failed to capture ${capturedEvents?.length ?? -1} events!`);
+            }
+        });
     }
 
     private onFlushEventCache(): void {
         this.flushEventCache().catch(noop);
+    }
+
+    private clearEventCacheFlushInterval(): void {
+        if (this.mCacheFlushInterval) {
+            clearInterval(this.mCacheFlushInterval);
+        }
+        this.mCacheFlushInterval = null;
     }
 }
 

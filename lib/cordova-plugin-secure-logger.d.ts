@@ -1,3 +1,4 @@
+export type EventFlushErrorCallback = (error: any, events: SecureLogEvent[]) => void;
 /**
  * Values to indicate the level of an event.
  * mirrors levels found in android.util.Log to minimize plugin friction.
@@ -117,12 +118,12 @@ export declare class SecureLoggerCordovaInterface {
     /**
      * Customizable callback to handle when event cache flush fails.
      */
-    eventFlushErrorCallback: (error: any) => void;
+    eventFlushErrorCallback: EventFlushErrorCallback | null;
     private readonly flushEventCacheProxy;
-    private readonly flushEventCacheSuccessProxy;
     private mEventCache;
     private mCacheFlushInterval;
     private mMaxCachedEvents;
+    private mCachingEnabled;
     constructor();
     /**
      * Maximum events allowed to be cached before
@@ -131,6 +132,52 @@ export declare class SecureLoggerCordovaInterface {
      */
     get maxCachedEvents(): number;
     set maxCachedEvents(value: number);
+    /**
+     * Current state of caching / event flush interval.
+     * Use `setEventCacheFlushInterval()` and `disableEventCaching()`
+     * to enable and disable (respectively) caching and flush interval usage.
+     */
+    get cachingEnabled(): boolean;
+    /**
+     * Queues a new log event with the given data and level of VERBOSE
+     */
+    verbose(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Queues a new log event with the given data and level of DEBUG
+     */
+    debug(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Queues a new log event with the given data and level of INFO
+     */
+    info(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Queues a new log event with the given data and level of WARN
+     */
+    warn(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Queues a new log event with the given data and level of ERROR
+     */
+    error(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Queues a new log event with the given data and level of FATAL
+     */
+    fatal(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Alias of `verbose()`
+     */
+    trace(tag: string, message: string, timestamp?: number): void;
+    /**
+     * Generates a log event that will be cached for the next
+     * event flush cycle, where all cached events will be handed to the plugin.
+     * If this would cause the cache to become larger than `maxCachedEvents`,
+     * the oldest item from the cache is removed after this new event is added.
+     */
+    log(level: SecureLogLevel, tag: string, message: string, timestamp?: number): void;
+    /**
+     * Get info about the debugging state of the app
+     * (i.e. whether or not we're attached to a developer console).
+     */
+    getDebugState(): Promise<DebugState>;
     /**
      * Change the output state of Timber/Lumberjack native logs.
      * When enabled, native logs will show in logcat/xcode.
@@ -179,28 +226,12 @@ export declare class SecureLoggerCordovaInterface {
      */
     configure(options: ConfigureOptions): Promise<ConfigureResult>;
     /**
-     * Get info about the debugging state of the app
-     * (i.e. whether or not we're attached to a developer console).
-     */
-    getDebugState(): Promise<DebugState>;
-    /**
-     * Manually flush the current set of cached events.
-     * Useful for more pragmatic teardown sequencing.
-     */
-    flushEventCache(): Promise<void>;
-    /**
      * Completely disables event caching on this
      * interface, and clears any buffered events.
      * **NOTE**: convenience methods that use `log()` will
      * do nothing until caching is turned back on.
      */
     disableEventCaching(): void;
-    /**
-     * Stops the internal flush interval.
-     * **NOTE**: convenience methods that use `log()` will
-     * do nothing until the flush interval is turned back on.
-     */
-    clearEventCacheFlushInterval(): void;
     /**
      * Sets the interval at which cached events will be flushed
      * and sent to the native logging system.
@@ -213,42 +244,12 @@ export declare class SecureLoggerCordovaInterface {
      */
     queueEvent(ev: SecureLogEvent): void;
     /**
-     * Generates a log event that will be cached for the next
-     * event flush cycle, where all cached events will be handed to the plugin.
-     * If this would cause the cache to become larger than `maxCachedEvents`,
-     * the oldest item from the cache is removed after this new event is added.
+     * Manually flush the current set of cached events.
+     * Useful for more pragmatic teardown sequencing.
      */
-    log(level: SecureLogLevel, tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of VERBOSE
-     */
-    verbose(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of DEBUG
-     */
-    debug(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of INFO
-     */
-    info(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of WARN
-     */
-    warn(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of ERROR
-     */
-    error(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Queues a new log event with the given data and level of FATAL
-     */
-    fatal(tag: string, message: string, timestamp?: number): void;
-    /**
-     * Alias of `verbose()`
-     */
-    trace(tag: string, message: string, timestamp?: number): void;
-    private onFlushEventCacheSuccess;
+    flushEventCache(): Promise<void>;
     private onFlushEventCache;
+    private clearEventCacheFlushInterval;
 }
 /**
  * Singleton reference to interact with this cordova plugin
