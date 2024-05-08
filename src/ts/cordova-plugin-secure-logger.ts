@@ -211,9 +211,6 @@ export class SecureLoggerCordovaInterface {
     private mCachingEnabled: boolean = false;
 
     constructor() {
-        // start caching events immediately so we don't
-        // drop any while cordova is still standing plugins up
-        this.setEventCacheFlushInterval();
     }
 
     /**
@@ -387,8 +384,20 @@ export class SecureLoggerCordovaInterface {
      */
     public disableEventCaching(): void {
         this.clearEventCacheFlushInterval();
-        this.mCachingEnabled = false;
         this.mEventCache = [];
+    }
+
+    /**
+     * Disables the flush interval if one is set.
+     * **NOTE**: this will leave the current event cache buffer in-tact.
+     * To also clear the buffer, call `disableEventCaching()` instead.
+     */
+    public clearEventCacheFlushInterval(): void {
+        if (this.mCachingEnabled) {
+            clearInterval(this.mCacheFlushInterval);
+            this.mCacheFlushInterval = null;
+            this.mCachingEnabled = false;
+        }
     }
 
     /**
@@ -446,13 +455,6 @@ export class SecureLoggerCordovaInterface {
 
     private onFlushEventCache(): void {
         this.flushEventCache().catch(noop);
-    }
-
-    private clearEventCacheFlushInterval(): void {
-        if (this.mCacheFlushInterval) {
-            clearInterval(this.mCacheFlushInterval);
-        }
-        this.mCacheFlushInterval = null;
     }
 }
 

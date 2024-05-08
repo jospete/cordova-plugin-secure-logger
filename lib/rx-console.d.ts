@@ -4,6 +4,7 @@ import { LogEvent, LoggerTransport } from '@obsidize/rx-console';
  */
 export interface WebViewEventListenerEnableOptions {
     flushOnPause?: boolean;
+    startFlushIntervalOnReady?: boolean;
 }
 /**
  * Defaults for webview logging enablement.

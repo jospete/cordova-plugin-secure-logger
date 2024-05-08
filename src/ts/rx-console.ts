@@ -1,24 +1,48 @@
 import { LogEvent, LogLevel, LoggerTransport, getPrimaryLoggerTransport, stringifyAndJoin } from '@obsidize/rx-console';
 import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 
+const READY_EVENT = 'deviceready';
 const PAUSE_EVENT = 'pause';
-let didAddFlushHook = false;
 
-function flushAndClose() {
-    SecureLogger.flushAndCloseActiveStream().catch(() => {});
+let didAddPauseFlushHook = false;
+let didAddReadyFlushIntervalHook = false;
+
+function noop() {
+}
+
+function flushAndClosePauseHook() {
+    SecureLogger.flushAndCloseActiveStream().catch(noop);
 }
 
 function addFlushAndClosePauseHook(): void {
-    if (!didAddFlushHook) {
-        document.addEventListener(PAUSE_EVENT, flushAndClose);
-        didAddFlushHook = true;
+    if (!didAddPauseFlushHook) {
+        document.addEventListener(PAUSE_EVENT, flushAndClosePauseHook);
+        didAddPauseFlushHook = true;
     }
 }
 
 function removeFlushAndClosePauseHook(): void {
-    if (didAddFlushHook) {
-        document.removeEventListener(PAUSE_EVENT, flushAndClose);
-        didAddFlushHook = false;
+    if (didAddPauseFlushHook) {
+        document.removeEventListener(PAUSE_EVENT, flushAndClosePauseHook);
+        didAddPauseFlushHook = false;
+    }
+}
+
+function flushIntervalReadyHook() {
+    SecureLogger.setEventCacheFlushInterval();
+}
+
+function addFlushIntervalReadyHook(): void {
+    if (!didAddReadyFlushIntervalHook) {
+        document.addEventListener(READY_EVENT, flushIntervalReadyHook);
+        didAddReadyFlushIntervalHook = true;
+    }
+}
+
+function removeFlushIntervalReadyHook(): void {
+    if (didAddReadyFlushIntervalHook) {
+        document.removeEventListener(READY_EVENT, flushIntervalReadyHook);
+        didAddReadyFlushIntervalHook = false;
     }
 }
 
@@ -50,13 +74,15 @@ function getFullWebviewEventMessage(ev: LogEvent): string {
  */
 export interface WebViewEventListenerEnableOptions {
     flushOnPause?: boolean;
+    startFlushIntervalOnReady?: boolean;
 }
 
 /**
  * Defaults for webview logging enablement.
  */
 export const defaultOptions: WebViewEventListenerEnableOptions = {
-    flushOnPause: true
+    flushOnPause: true,
+    startFlushIntervalOnReady: true
 };
 
 /**
@@ -88,6 +114,7 @@ export function enableWebviewListener(
 ): void {
     transport.addListener(sendRxConsoleEventToNative);
     if (options?.flushOnPause) addFlushAndClosePauseHook();
+    if (options?.startFlushIntervalOnReady) addFlushIntervalReadyHook();
 }
 
 /**
@@ -100,6 +127,7 @@ export function disableWebviewListener(
 ): void {
     transport.removeListener(sendRxConsoleEventToNative);
     removeFlushAndClosePauseHook();
+    removeFlushIntervalReadyHook();
 }
 
 /**

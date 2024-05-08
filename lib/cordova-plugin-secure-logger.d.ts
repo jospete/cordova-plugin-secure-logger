@@ -233,6 +233,12 @@ export declare class SecureLoggerCordovaInterface {
      */
     disableEventCaching(): void;
     /**
+     * Disables the flush interval if one is set.
+     * **NOTE**: this will leave the current event cache buffer in-tact.
+     * To also clear the buffer, call `disableEventCaching()` instead.
+     */
+    clearEventCacheFlushInterval(): void;
+    /**
      * Sets the interval at which cached events will be flushed
      * and sent to the native logging system.
      * Default flush interval is 1000 milliseconds.
@@ -249,7 +255,6 @@ export declare class SecureLoggerCordovaInterface {
      */
     flushEventCache(): Promise<void>;
     private onFlushEventCache;
-    private clearEventCacheFlushInterval;
 }
 /**
  * Singleton reference to interact with this cordova plugin

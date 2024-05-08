@@ -61,9 +61,6 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         this.mCacheFlushInterval = null;
         this.mMaxCachedEvents = 1000;
         this.mCachingEnabled = false;
-        // start caching events immediately so we don't
-        // drop any while cordova is still standing plugins up
-        this.setEventCacheFlushInterval();
     }
     Object.defineProperty(SecureLoggerCordovaInterface.prototype, "maxCachedEvents", {
         /**
@@ -226,8 +223,19 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
      */
     SecureLoggerCordovaInterface.prototype.disableEventCaching = function () {
         this.clearEventCacheFlushInterval();
-        this.mCachingEnabled = false;
         this.mEventCache = [];
+    };
+    /**
+     * Disables the flush interval if one is set.
+     * **NOTE**: this will leave the current event cache buffer in-tact.
+     * To also clear the buffer, call `disableEventCaching()` instead.
+     */
+    SecureLoggerCordovaInterface.prototype.clearEventCacheFlushInterval = function () {
+        if (this.mCachingEnabled) {
+            clearInterval(this.mCacheFlushInterval);
+            this.mCacheFlushInterval = null;
+            this.mCachingEnabled = false;
+        }
     };
     /**
      * Sets the interval at which cached events will be flushed
@@ -280,12 +288,6 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
     };
     SecureLoggerCordovaInterface.prototype.onFlushEventCache = function () {
         this.flushEventCache().catch(noop);
-    };
-    SecureLoggerCordovaInterface.prototype.clearEventCacheFlushInterval = function () {
-        if (this.mCacheFlushInterval) {
-            clearInterval(this.mCacheFlushInterval);
-        }
-        this.mCacheFlushInterval = null;
     };
     return SecureLoggerCordovaInterface;
 }());
