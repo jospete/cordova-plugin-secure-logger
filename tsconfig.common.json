@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"typeRoots": ["node_modules/@types"],
+		"types": ["cordova"],
+		"lib": ["ES5", "DOM", "ES2015"],
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"moduleResolution": "node"
+	},
+	"compileOnSave": true,
+	"exclude": [
+        "node_modules",
+        "tests/*.ts"
+    ]
+}

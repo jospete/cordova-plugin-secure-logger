@@ -1,23 +1,12 @@
 {
+	"extends": "./tsconfig.common.json",
 	"compilerOptions": {
 		"target": "ES5",
 		"module": "CommonJS",
 		"outDir": "www/",
-		"typeRoots": ["node_modules/@types"],
-		"types": ["cordova"],
-		"lib": ["ES5", "DOM", "ES2015"],
-		"declaration": false,
-		"strict": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"moduleResolution": "node"
+		"declaration": false
 	},
-	"compileOnSave": true,
 	"include": [
         "src/ts/cordova-plugin-secure-logger.ts"
-    ],
-	"exclude": [
-        "node_modules",
-        "tests/*.ts"
     ]
 }
