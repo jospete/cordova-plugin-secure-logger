@@ -116,6 +116,11 @@ export interface DebugState {
 }
 export declare class SecureLoggerCordovaInterface {
     /**
+     * When true, will attempt to re-insert the events
+     * that failed to be flushed into the beginning of the cache.
+     */
+    recycleEventsOnFlushFailure: boolean;
+    /**
      * Customizable callback to handle when event cache flush fails.
      */
     eventFlushErrorCallback: EventFlushErrorCallback | null;
@@ -123,15 +128,26 @@ export declare class SecureLoggerCordovaInterface {
     private mEventCache;
     private mCacheFlushInterval;
     private mMaxCachedEvents;
+    private mFlushIntervalDelayMs;
     private mCachingEnabled;
     constructor();
     /**
      * Maximum events allowed to be cached before
      * automatic pruning takes effect.
      * See `log()` for more info.
+     *
+     * default = 1000
      */
     get maxCachedEvents(): number;
     set maxCachedEvents(value: number);
+    /**
+     * Delay that will be used when creating the event loop interval
+     * for flushing queued events.
+     *
+     * default = 250
+     */
+    get flushIntervalDelayMs(): number;
+    set flushIntervalDelayMs(value: number);
     /**
      * Current state of caching / event flush interval.
      * Use `setEventCacheFlushInterval()` and `disableEventCaching()`
@@ -239,9 +255,10 @@ export declare class SecureLoggerCordovaInterface {
      */
     clearEventCacheFlushInterval(): void;
     /**
-     * Sets the interval at which cached events will be flushed
-     * and sent to the native logging system.
-     * Default flush interval is 1000 milliseconds.
+     * Sets the interval at which cached events will be
+     * flushed and sent to the native logging system.
+     * If no interval value provided, the current value of
+     * `flushIntervalDelayMs` will be used.
      */
     setEventCacheFlushInterval(intervalMs?: number): void;
     /**
@@ -255,6 +272,9 @@ export declare class SecureLoggerCordovaInterface {
      */
     flushEventCache(): Promise<void>;
     private onFlushEventCache;
+    private purgeExcessEvents;
+    private prependQueuedEvents;
+    private onFlushCaptureFailure;
 }
 /**
  * Singleton reference to interact with this cordova plugin

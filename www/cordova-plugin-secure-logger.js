@@ -53,6 +53,11 @@ function unwrapConfigureResult(value) {
 var SecureLoggerCordovaInterface = /** @class */ (function () {
     function SecureLoggerCordovaInterface() {
         /**
+         * When true, will attempt to re-insert the events
+         * that failed to be flushed into the beginning of the cache.
+         */
+        this.recycleEventsOnFlushFailure = true;
+        /**
          * Customizable callback to handle when event cache flush fails.
          */
         this.eventFlushErrorCallback = null;
@@ -60,6 +65,7 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         this.mEventCache = [];
         this.mCacheFlushInterval = null;
         this.mMaxCachedEvents = 1000;
+        this.mFlushIntervalDelayMs = 250;
         this.mCachingEnabled = false;
     }
     Object.defineProperty(SecureLoggerCordovaInterface.prototype, "maxCachedEvents", {
@@ -67,12 +73,34 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
          * Maximum events allowed to be cached before
          * automatic pruning takes effect.
          * See `log()` for more info.
+         *
+         * default = 1000
          */
         get: function () {
             return this.mMaxCachedEvents;
         },
         set: function (value) {
-            this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+            if (typeof value === 'number') {
+                this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+            }
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(SecureLoggerCordovaInterface.prototype, "flushIntervalDelayMs", {
+        /**
+         * Delay that will be used when creating the event loop interval
+         * for flushing queued events.
+         *
+         * default = 250
+         */
+        get: function () {
+            return this.mFlushIntervalDelayMs;
+        },
+        set: function (value) {
+            if (typeof value === 'number') {
+                this.mFlushIntervalDelayMs = Math.max(0, Math.floor(value));
+            }
         },
         enumerable: false,
         configurable: true
@@ -238,14 +266,17 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         }
     };
     /**
-     * Sets the interval at which cached events will be flushed
-     * and sent to the native logging system.
-     * Default flush interval is 1000 milliseconds.
+     * Sets the interval at which cached events will be
+     * flushed and sent to the native logging system.
+     * If no interval value provided, the current value of
+     * `flushIntervalDelayMs` will be used.
      */
     SecureLoggerCordovaInterface.prototype.setEventCacheFlushInterval = function (intervalMs) {
-        if (intervalMs === void 0) { intervalMs = 1000; }
+        if (typeof intervalMs === 'number') {
+            this.flushIntervalDelayMs = intervalMs;
+        }
         this.clearEventCacheFlushInterval();
-        this.mCacheFlushInterval = setInterval(this.flushEventCacheProxy, intervalMs);
+        this.mCacheFlushInterval = setInterval(this.flushEventCacheProxy, this.flushIntervalDelayMs);
         this.mCachingEnabled = true;
         // flush immediately when this is updated
         this.onFlushEventCache();
@@ -256,9 +287,7 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
      */
     SecureLoggerCordovaInterface.prototype.queueEvent = function (ev) {
         this.mEventCache.push(ev);
-        if (this.mEventCache.length > this.maxCachedEvents) {
-            this.mEventCache.shift();
-        }
+        this.purgeExcessEvents();
     };
     /**
      * Manually flush the current set of cached events.
@@ -277,17 +306,31 @@ var SecureLoggerCordovaInterface = /** @class */ (function () {
         var capturedEvents = this.mEventCache;
         this.mEventCache = [];
         return this.capture(capturedEvents).catch(function (err) {
-            var _a;
-            if (typeof _this.eventFlushErrorCallback === 'function') {
-                _this.eventFlushErrorCallback(err, capturedEvents);
-            }
-            else {
-                _this.error(PLUGIN_NAME, "failed to capture ".concat((_a = capturedEvents === null || capturedEvents === void 0 ? void 0 : capturedEvents.length) !== null && _a !== void 0 ? _a : -1, " events!"));
-            }
+            _this.onFlushCaptureFailure(err, capturedEvents);
         });
     };
     SecureLoggerCordovaInterface.prototype.onFlushEventCache = function () {
         this.flushEventCache().catch(noop);
+    };
+    SecureLoggerCordovaInterface.prototype.purgeExcessEvents = function () {
+        while (this.mEventCache.length > this.maxCachedEvents) {
+            this.mEventCache.shift(); // remove in order of older -> newer
+        }
+    };
+    SecureLoggerCordovaInterface.prototype.prependQueuedEvents = function (events) {
+        var _a;
+        (_a = this.mEventCache).unshift.apply(_a, events);
+        this.purgeExcessEvents();
+    };
+    SecureLoggerCordovaInterface.prototype.onFlushCaptureFailure = function (error, events) {
+        var _a;
+        if (typeof this.eventFlushErrorCallback === 'function') {
+            this.eventFlushErrorCallback(error, events);
+        }
+        if (this.recycleEventsOnFlushFailure) {
+            this.prependQueuedEvents(events);
+        }
+        this.error(PLUGIN_NAME, "failed to capture ".concat((_a = events === null || events === void 0 ? void 0 : events.length) !== null && _a !== void 0 ? _a : -1, " events! (error was: ").concat(error, ")"));
     };
     return SecureLoggerCordovaInterface;
 }());

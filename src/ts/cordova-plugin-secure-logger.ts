@@ -200,6 +200,12 @@ function unwrapConfigureResult(value: ConfigureResult): Promise<ConfigureResult>
 export class SecureLoggerCordovaInterface {
 
     /**
+     * When true, will attempt to re-insert the events
+     * that failed to be flushed into the beginning of the cache.
+     */
+    public recycleEventsOnFlushFailure: boolean = true;
+
+    /**
      * Customizable callback to handle when event cache flush fails.
      */
     public eventFlushErrorCallback: EventFlushErrorCallback | null = null;
@@ -208,6 +214,7 @@ export class SecureLoggerCordovaInterface {
     private mEventCache: SecureLogEvent[] = [];
     private mCacheFlushInterval: any = null;
     private mMaxCachedEvents: number = 1000;
+    private mFlushIntervalDelayMs: number = 250;
     private mCachingEnabled: boolean = false;
 
     constructor() {
@@ -217,13 +224,33 @@ export class SecureLoggerCordovaInterface {
      * Maximum events allowed to be cached before
      * automatic pruning takes effect.
      * See `log()` for more info.
+     * 
+     * default = 1000
      */
     public get maxCachedEvents(): number {
         return this.mMaxCachedEvents;
     }
 
     public set maxCachedEvents(value: number) {
-        this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+        if (typeof value === 'number') {
+            this.mMaxCachedEvents = Math.max(1, Math.floor(value));
+        }
+    }
+
+    /**
+     * Delay that will be used when creating the event loop interval
+     * for flushing queued events.
+     * 
+     * default = 250
+     */
+    public get flushIntervalDelayMs(): number {
+        return this.mFlushIntervalDelayMs;
+    }
+
+    public set flushIntervalDelayMs(value: number) {
+        if (typeof value === 'number') {
+            this.mFlushIntervalDelayMs = Math.max(0, Math.floor(value));
+        }
     }
 
     /**
@@ -401,16 +428,22 @@ export class SecureLoggerCordovaInterface {
     }
 
     /**
-     * Sets the interval at which cached events will be flushed
-     * and sent to the native logging system.
-     * Default flush interval is 1000 milliseconds.
+     * Sets the interval at which cached events will be 
+     * flushed and sent to the native logging system.
+     * If no interval value provided, the current value of
+     * `flushIntervalDelayMs` will be used.
      */
-    public setEventCacheFlushInterval(intervalMs: number = 1000): void {
+    public setEventCacheFlushInterval(intervalMs?: number): void {
+        if (typeof intervalMs === 'number') {
+            this.flushIntervalDelayMs = intervalMs;
+        }
+
         this.clearEventCacheFlushInterval();
         this.mCacheFlushInterval = setInterval(
             this.flushEventCacheProxy, 
-            intervalMs
+            this.flushIntervalDelayMs
         );
+        
         this.mCachingEnabled = true;
         // flush immediately when this is updated
         this.onFlushEventCache();
@@ -422,9 +455,7 @@ export class SecureLoggerCordovaInterface {
      */
     public queueEvent(ev: SecureLogEvent): void {
         this.mEventCache.push(ev);
-        if (this.mEventCache.length > this.maxCachedEvents) {
-            this.mEventCache.shift();
-        }
+        this.purgeExcessEvents();
     }
 
     /**
@@ -445,16 +476,35 @@ export class SecureLoggerCordovaInterface {
         this.mEventCache = [];
 
         return this.capture(capturedEvents).catch((err: any) => {
-            if (typeof this.eventFlushErrorCallback === 'function') {
-                this.eventFlushErrorCallback(err, capturedEvents);
-            } else {
-                this.error(PLUGIN_NAME, `failed to capture ${capturedEvents?.length ?? -1} events!`);
-            }
+            this.onFlushCaptureFailure(err, capturedEvents);
         });
     }
 
     private onFlushEventCache(): void {
         this.flushEventCache().catch(noop);
+    }
+
+    private purgeExcessEvents(): void {
+        while (this.mEventCache.length > this.maxCachedEvents) {
+            this.mEventCache.shift(); // remove in order of older -> newer
+        }
+    }
+
+    private prependQueuedEvents(events: SecureLogEvent[]): void {
+        this.mEventCache.unshift(...events);
+        this.purgeExcessEvents();
+    }
+
+    private onFlushCaptureFailure(error: any, events: SecureLogEvent[]): void {
+        if (typeof this.eventFlushErrorCallback === 'function') {
+            this.eventFlushErrorCallback(error, events);
+        }
+
+        if (this.recycleEventsOnFlushFailure) {
+            this.prependQueuedEvents(events);
+        }
+
+        this.error(PLUGIN_NAME, `failed to capture ${events?.length ?? -1} events! (error was: ${error})`);
     }
 }
 
