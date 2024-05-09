@@ -11,7 +11,5 @@ export {
 export {
     sendRxConsoleEventToNative,
     enableWebviewListener,
-    disableWebviewListener,
-    enableWebviewToNative,
-    disableWebviewToNative
+    disableWebviewListener
 } from './rx-console';

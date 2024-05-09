@@ -32,17 +32,3 @@ export declare function enableWebviewListener(transport?: LoggerTransport, optio
  * package after this is called.
  */
 export declare function disableWebviewListener(transport?: LoggerTransport): void;
-/**
- * Activates both rx-console event capture AND the
- * automated event cache flush interval on the plugin.
- * Call this if you need to turn the webview side of the plugin
- * back on after calling `disableWebviewToNative()`.
- */
-export declare function enableWebviewToNative(transport?: LoggerTransport): void;
-/**
- * Disables both rx-console event capture AND the
- * automated event cache flush interval on the plugin.
- * Call this when you're not running in a cordova or capacitor environment
- * (e.g. vanilla webapp in a browser)
- */
-export declare function disableWebviewToNative(transport?: LoggerTransport): void;
