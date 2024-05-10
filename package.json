@@ -54,6 +54,6 @@
     "typescript": "5.2.2"
   },
   "dependencies": {
-    "@obsidize/rx-console": "^6.1.6"
+    "@obsidize/rx-console": "^6.2.1"
   }
 }
