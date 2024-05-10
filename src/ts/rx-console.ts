@@ -4,8 +4,15 @@ import { SecureLogLevel, SecureLogger } from './cordova-plugin-secure-logger';
 const READY_EVENT = 'deviceready';
 const PAUSE_EVENT = 'pause';
 
+let webviewListenerEnabled = false;
 let didAddPauseFlushHook = false;
 let didAddReadyFlushIntervalHook = false;
+let didReadyEventFire = false;
+
+// begin watching for ready event immediately to maintain correct state
+document.addEventListener(READY_EVENT, () => {
+    didReadyEventFire = true;
+});
 
 function noop() {
 }
@@ -33,7 +40,10 @@ function flushIntervalReadyHook() {
 }
 
 function addFlushIntervalReadyHook(): void {
-    if (!didAddReadyFlushIntervalHook) {
+    if (didReadyEventFire) {
+        // if ready event already fired, call hook immediately
+        flushIntervalReadyHook();
+    } else if (!didAddReadyFlushIntervalHook) {
         document.addEventListener(READY_EVENT, flushIntervalReadyHook);
         didAddReadyFlushIntervalHook = true;
     }
@@ -112,9 +122,12 @@ export function enableWebviewListener(
     transport: LoggerTransport = getPrimaryLoggerTransport(),
     options: WebViewEventListenerEnableOptions = defaultOptions
 ): void {
-    transport.addListener(sendRxConsoleEventToNative);
-    if (options?.flushOnPause) addFlushAndClosePauseHook();
-    if (options?.startFlushIntervalOnReady) addFlushIntervalReadyHook();
+    if (!webviewListenerEnabled) {
+        transport.addListener(sendRxConsoleEventToNative);
+        if (options?.startFlushIntervalOnReady) addFlushIntervalReadyHook();
+        if (options?.flushOnPause) addFlushAndClosePauseHook();
+        webviewListenerEnabled = true;
+    }
 }
 
 /**
@@ -125,7 +138,12 @@ export function enableWebviewListener(
 export function disableWebviewListener(
     transport: LoggerTransport = getPrimaryLoggerTransport()
 ): void {
-    transport.removeListener(sendRxConsoleEventToNative);
-    removeFlushAndClosePauseHook();
-    removeFlushIntervalReadyHook();
+    if (webviewListenerEnabled) {
+        // unwind hooks in the opposite order they were added
+        removeFlushAndClosePauseHook();
+        removeFlushIntervalReadyHook();
+        transport.removeListener(sendRxConsoleEventToNative);
+        SecureLogger.clearEventCacheFlushInterval();
+        webviewListenerEnabled = false;
+    }
 }
