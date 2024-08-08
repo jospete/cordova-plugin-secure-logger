@@ -74,7 +74,7 @@ private fun getLogLevelPart(priority: Int): String {
 
 fun serializeNativeEvent(priority: Int, tag: String?, message: String, t: Throwable?): String {
 	val timestamp = timestampOf(Date())
-	val throwDump = if (t != null) " :: ${t.stackTrace}" else ""
+	val throwDump = if (t != null) " :: ${t.stackTraceToString()}" else ""
 	return "$timestamp ${getLogLevelPart(priority)} [${tag ?: NO_TAG}] $message$throwDump"
 }
 
